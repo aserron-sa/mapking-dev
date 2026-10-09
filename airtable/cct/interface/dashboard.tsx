@@ -10,7 +10,7 @@ import {
 import type { Record as AtRecord, Table } from '@airtable/blocks/interface/models';
 
 /**
- * CEO Command Center — Landing Dashboard (Story MapKMigGon38569) · v3 · 2026-10-07
+ * CEO Command Center — Landing Dashboard (Story MapKMigGon38569) · v3.1 · 2026-10-07
  *
  * Airtable Interface Extension (Map King Hub → Interface 2 → "CEO Command Center").
  * Renders 7 fixed tiles, each showing the single most important state of one area, plus a
@@ -26,6 +26,11 @@ import type { Record as AtRecord, Table } from '@airtable/blocks/interface/model
  *   D-03  the diff after a state change always read "No change"
  *   D-04  every one of the 7 tiles shows a diff state
  * and D-05: tiles only count tasks whose lifecycle is "open".
+ *
+ * v3.1: Right Now reads the exact event times Loom v3.9 writes (starts_at, ends_at, all_day).
+ * It shows the event in progress and the next one today, and hides events that have ended.
+ * Before, it read the date-only due_date as midnight UTC (the previous day in the Americas),
+ * so today's events never appeared.
  */
 
 const ORANGE = '#f0883e';
@@ -47,6 +52,13 @@ const T = {
     sourceTable: 'fldzYRdrxSjCpSQsk',
     dueDate: 'fldld41zIqgdNXeyn',
     lifecycle: 'fldzqG2oVnK93COcW',
+};
+// Calendar timing fields (Loom v3.9+, Google Calendar rows only). Kept apart from T on purpose:
+// if they are missing (e.g. not enabled for this Interface) only Right Now fails, not the whole dashboard.
+const C = {
+    startsAt: 'fldrlnSKq9mvoDRLu', // dateTime, empty for all-day events
+    endsAt: 'fldIIcqQnllCLko5c', // dateTime, empty for all-day events
+    allDay: 'fldPHaq4WRruW6SbL', // checkbox
 };
 // Field ids in dashboard_tile_baseline (tblOkKSZroaOk8kQ3).
 const B = {
@@ -473,15 +485,16 @@ function formatRelative(dateString: string | null): string {
     const diffDays = Math.floor(diffHours / 24);
     return diffDays === 1 ? 'yesterday' : `${diffDays}d ago`;
 }
-function isToday(dateString: string | null): boolean {
-    if (!dateString) return false;
-    const date = new Date(dateString);
-    const today = new Date();
-    return (
-        date.getFullYear() === today.getFullYear() &&
-        date.getMonth() === today.getMonth() &&
-        date.getDate() === today.getDate()
-    );
+/**
+ * True when a date-only value ("YYYY-MM-DD") is today in the viewer's time zone.
+ * Never pass it through `new Date()`: that reads it as midnight UTC, which is still
+ * the previous day anywhere west of UTC.
+ */
+function isLocalToday(dateOnly: string | null, now: Date): boolean {
+    if (!dateOnly) return false;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    return dateOnly.slice(0, 10) === today;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -543,6 +556,12 @@ function Dashboard({
     const session = useSession();
     const userId = session?.currentUser?.id ?? null;
     const { isPageElementInEditMode } = useRunInfo();
+    // Re-render every minute so Right Now moves on as events start and end. The diff stays frozen.
+    const [now, setNow] = useState(() => Date.now());
+    useEffect(() => {
+        const id = setInterval(() => setNow(Date.now()), 60_000);
+        return () => clearInterval(id);
+    }, []);
     const { customPropertyValueByKey } = useCustomProperties(getCustomProperties);
     const qaForceReadFailure = customPropertyValueByKey.qaForceReadFailure === true;
 
@@ -590,17 +609,53 @@ function Dashboard({
         .filter(Boolean)
         .join(' · ');
 
-    // ---- RIGHT NOW ---- today's calendar events, earliest first
-    const calendarSorted = openTasks
-        .filter((r) => text(r, T.source) === 'Google Calendar' && isToday(raw(r, T.dueDate)))
-        .sort((a, b) => new Date(raw(a, T.dueDate) ?? 0).getTime() - new Date(raw(b, T.dueDate) ?? 0).getTime());
-    const nextEvent = calendarSorted[0] ?? null;
-    const nextEventTitle = nextEvent ? text(nextEvent, T.title) : null;
-    const nextEventTime = nextEvent ? formatTime(raw(nextEvent, T.dueDate)) : '';
-    const calendarDetails: DetailItem[] = calendarSorted.slice(1).map((r) => ({
-        label: text(r, T.title) ?? 'Untitled',
-        meta: formatTime(raw(r, T.dueDate)),
-    }));
+    // ---- RIGHT NOW ---- the event in progress and the next one today, from exact times.
+    // Events that already ended are hidden here even before Loom's next sync closes them.
+    const calendarFieldsReady = !!tasksTable && Object.values(C).every((id) => tasksTable.getFieldIfExists(id));
+    const nowDate = new Date(now);
+    const endOfToday = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate() + 1).getTime();
+    const time = (r: AtRecord, f: string) => (raw(r, f) ? new Date(raw(r, f)!).getTime() : null);
+    const calendarRows = calendarFieldsReady ? openTasks.filter((r) => text(r, T.source) === 'Google Calendar') : [];
+    const timedToday = calendarRows
+        .filter((r) => {
+            const start = time(r, C.startsAt);
+            const end = time(r, C.endsAt);
+            return start !== null && end !== null && start < endOfToday && end > now;
+        })
+        .sort((a, b) => time(a, C.startsAt)! - time(b, C.startsAt)!);
+    const inProgress = timedToday.filter((r) => time(r, C.startsAt)! <= now);
+    const upcoming = timedToday.filter((r) => time(r, C.startsAt)! > now);
+    const allDayToday = calendarRows.filter((r) => !!r.getCellValue(C.allDay) && isLocalToday(raw(r, T.dueDate), nowDate));
+    // Rows synced before Loom v3.9 have no times yet; list them so they are not silently dropped.
+    const untimedToday = calendarRows.filter(
+        (r) => !r.getCellValue(C.allDay) && !raw(r, C.startsAt) && isLocalToday(raw(r, T.dueDate), nowDate),
+    );
+    const currentEvent = inProgress[0] ?? null;
+    const nextEvent = upcoming[0] ?? null;
+    // Headline priority: event in progress, then next timed event, then an all-day or not-yet-timed event.
+    const headlineEvent = currentEvent ?? nextEvent ?? allDayToday[0] ?? untimedToday[0] ?? null;
+    const rightNowRows = [...timedToday, ...allDayToday, ...untimedToday];
+    const rightNowSubtext = currentEvent
+        ? `Now, until ${formatTime(raw(currentEvent, C.endsAt))}` +
+          (nextEvent ? ` · next at ${formatTime(raw(nextEvent, C.startsAt))}` : '')
+        : nextEvent
+          ? `Next at ${formatTime(raw(nextEvent, C.startsAt))}`
+          : headlineEvent
+            ? allDayToday.includes(headlineEvent)
+                ? 'All day'
+                : 'Time not synced yet'
+            : null;
+    const calendarDetails: DetailItem[] = [
+        ...timedToday.map((r) => ({
+            row: r,
+            label: text(r, T.title) ?? 'Untitled',
+            meta: `${formatTime(raw(r, C.startsAt))}–${formatTime(raw(r, C.endsAt))}`,
+        })),
+        ...allDayToday.map((r) => ({ row: r, label: text(r, T.title) ?? 'Untitled', meta: 'All day' })),
+        ...untimedToday.map((r) => ({ row: r, label: text(r, T.title) ?? 'Untitled', meta: 'Time not synced yet' })),
+    ]
+        .filter((d) => d.row !== headlineEvent)
+        .map(({ label, meta }) => ({ label, meta }));
 
     // ---- APPROVALS ---- pending items from the Airtable approvals table, oldest first
     const approvalsSorted = byOldest(
@@ -630,8 +685,9 @@ function Dashboard({
               switch (tileId) {
                   case 'needs_you':
                       return { tileId, status: needsYouTask ? 'ok' : 'empty', value: needsYouTask?.id ?? null };
-                  case 'right_now':
-                      return { tileId, status: nextEvent ? 'ok' : 'empty', value: idsOf(calendarSorted) || null };
+                  case 'right_now': // the set of events still ahead today; an event ending counts as a change
+                      if (!calendarFieldsReady) return { tileId, status: 'error', value: null };
+                      return { tileId, status: rightNowRows.length ? 'ok' : 'empty', value: idsOf(rightNowRows) || null };
                   case 'approvals':
                       return { tileId, status: approvalsSorted.length ? 'ok' : 'empty', value: `${approvalsSorted.length}|${idsOf(approvalsSorted)}` };
                   case 'qa':
@@ -709,11 +765,18 @@ function Dashboard({
                     <SmallStatCard
                         label="RIGHT NOW"
                         navLabel="Calendar →"
-                        headline={nextEventTitle}
+                        headline={headlineEvent ? text(headlineEvent, T.title) : null}
                         headlineColor={ORANGE}
-                        subtext={nextEvent ? `Next at ${nextEventTime}` : null}
+                        subtext={rightNowSubtext}
                         detailItems={calendarDetails}
-                        placeholder={failed('Right Now') ?? (nextEvent ? undefined : 'Nothing on the calendar today.')}
+                        placeholder={
+                            failed('Right Now') ??
+                            (!calendarFieldsReady
+                                ? 'Calendar times unavailable: enable starts_at, ends_at and all_day for this Interface.'
+                                : headlineEvent
+                                  ? undefined
+                                  : 'Nothing else on the calendar today.')
+                        }
                         diffStatus={diffFor('right_now')}
                     />
                     <SmallStatCard
