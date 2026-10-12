@@ -622,8 +622,16 @@ class PowerHourService {
     const P = IDS.power;
     const text = entry.text?.trim() ?? '';
     if (!entry.taskId && !text) return { status: 'validation_failed', message: 'Write something to add.' };
-    if (entry.taskId && items.some((i) => i.taskId === entry.taskId)) {
-      return { status: 'validation_failed', message: "This task is already in today's power hour." };
+    const normalize = (s: string | null) => (s ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+    const duplicate = entry.taskId
+      ? items.some((i) => i.taskId === entry.taskId)
+      : items.some((i) => !i.taskId && normalize(i.manualText) === normalize(text));
+    if (duplicate) {
+      const message = entry.taskId
+        ? "This task is already in today's power hour."
+        : "An item with this text is already in today's power hour.";
+      await this.log.write({ type: 'validation_failed', status: 'validation_failed', taskId: entry.taskId ?? null, message });
+      return { status: 'validation_failed', message };
     }
     if (!this.table.hasPermissionToCreateRecords()) return this.denied(entry.taskId ?? null);
 
