@@ -56,6 +56,7 @@ Status comparisons are case-insensitive. Snapshot on 2026-10-11: 113 open tasks,
 - Cleared when all signals disappear or the task closes; a later signal starts a new wait.
 - Basis: `manual` = `needs_you_manual_at` (exact); `first_seen` = when Airtable first saw an automatic signal (precision = Loom sync frequency, today once per business day); `estimated` = initial backfill from `last_updated_at` for tasks already waiting at rollout.
 - Days waiting = now − `waiting_since`. Missing or invalid → end of the list and a `needs_you_data_issue` event.
+- Manual mark (Today, block 3b): Max marks or unmarks any open task. If he already has a `task_lanes` row for it, only `needs_you_manual` changes (lane and rank untouched); otherwise a row is created in lane `waiting_on` (prototype: Waiting On · Blocked on you). Marking a task with no `waiting_since` stamps it immediately (basis `manual`); the hourly automation remains the reconciler. Both actions are logged as `needs_you_mark`.
 
 ## New table `priority_events` (`tbl0k4YFnduwhMJG2`)
 
@@ -64,7 +65,7 @@ Event log for the daily priority list. Never delete rows.
 | Field | ID | Type |
 |---|---|---|
 | summary (primary) | `fldxNmEoRpB4SRouZ` | single line text |
-| event_type | `fldu8UXkQBfrIHvZe` | single select: promote, demote, reorder, validation_failed, airtable_error, compensation, guard_fix, dedupe, needs_you_data_issue, power_hour_update |
+| event_type | `fldu8UXkQBfrIHvZe` | single select: promote, demote, reorder, validation_failed, airtable_error, compensation, guard_fix, dedupe, needs_you_data_issue, power_hour_update, needs_you_mark (added by hand: the API cannot add select options) |
 | status | `fldL2k5qUjcOasDxU` | single select: ok, demotion_required, validation_failed, dependency_failed |
 | source | `fldIj7BNfY7f13atJ` | single select: extension, automation |
 | user | `fldzCkpn3zNyG6Ehm` | collaborator |
@@ -78,6 +79,8 @@ Event log for the daily priority list. Never delete rows.
 ## New table `power_hour_items` (`tblwFsPqbejWWYPmf`)
 
 Persisted Power Hour checklist (order + completion). Never written back to the source system; linked tasks store only the link.
+
+Behavior (Today, block 3c): the list shown is the current user's rows whose `date` is today in the viewer's local time. Max adds open tasks (search picker) or manual items; up to 4 short open tasks are offered as one-click suggestions (advisory, never added automatically). Checking sets `done` and `done_at`; reorder renumbers `position` 1..n in one batch (and rewrites `item_key`); remove deletes the row (Airtable moves it to the trash, recoverable with Undo) and closes the gap; a removed task is offered again and, if re-added, goes to the end. The same task, or a manual item with the same text (case and spacing ignored), can appear only once per day: the picker and suggestions never offer a task already in the list, and the extension also rejects duplicates (covers two open tabs), logging validation_failed. Every change is logged in `priority_events` as `power_hour_update` (errors as `airtable_error`). Unfinished items do not carry over to the next day.
 
 | Field | ID | Type |
 |---|---|---|

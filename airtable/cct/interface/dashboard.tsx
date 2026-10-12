@@ -31,6 +31,16 @@ import type { Record as AtRecord, Table } from '@airtable/blocks/interface/model
  * It shows the event in progress and the next one today, and hides events that have ended.
  * Before, it read the date-only due_date as midnight UTC (the previous day in the Americas),
  * so today's events never appeared.
+ *
+ * v3.2 (2026-10-12, released with MapKMigGon38570): On Fire and Needs You read the same store
+ * as their owning page, Today, as the Build Spec requires.
+ *   On Fire    the signed-in user's rank-1 fire from task_lanes (lane on_fire) and how many fires are
+ *              ranked. Before: "Unavailable — ranking logic not built yet (CC3)".
+ *   Needs You  the open task waiting longest by the stored waiting_since among tasks with at least
+ *              one Needs-You signal (needs_you_signals). Before: the oldest open task by
+ *              last_updated_at, which was not "waiting on you" and disagreed with Today.
+ * Their fields are checked apart from T: if task_lanes or the Needs-You fields are not enabled for
+ * this page, only that tile shows an error.
  */
 
 const ORANGE = '#f0883e';
@@ -40,6 +50,7 @@ const BLUE = '#58a6ff';
 
 const TASKS_TABLE_ID = 'tblX61yfIFroyhMTj';
 const BASELINE_TABLE_ID = 'tblOkKSZroaOk8kQ3';
+const LANES_TABLE_ID = 'tblZhorxkVfKdsW3Z'; // task_lanes: fire ranking (MapKMigGon38570)
 
 // Field ids in command_center_tasks (tblX61yfIFroyhMTj). Ids, not names, so renames don't break the extension.
 const T = {
@@ -66,6 +77,26 @@ const B = {
     tileId: 'fldZRM66FUY6VyEI8',
     snapshot: 'fldqsYdDnBJXVIRtF', // versioned JSON, see snapshotOf()
     lastViewed: 'fldlBlHkMRHXR5ZNj', // dateTime: written as an ISO string
+};
+// Needs-You fields in command_center_tasks (MapKMigGon38570). Apart from T: if missing, only Needs You fails.
+const N = {
+    signals: 'fld7byISqz2gObpzl', // formula: comma-separated signals, empty = not in Needs-You
+    waitingSince: 'fldyg45qTxIIhESfp', // dateTime, stamped by the hourly automation or a manual mark
+    waitingBasis: 'fldi2U965ciOBxxws', // single select: manual / first_seen / estimated
+};
+// Field ids in task_lanes (tblZhorxkVfKdsW3Z). If missing, only On Fire fails.
+const L = {
+    user: 'fldv531mBAE9KL2Yk',
+    task: 'fldXRxxIcIxWbZ7ai',
+    lane: 'fldHBsnLRIT7RrGv0',
+    rank: 'fld1PKtXTsBK17pxD',
+};
+const SIGNAL_LABELS: Record<string, string> = {
+    approval_pending: 'Approval pending',
+    ticket_needs_max: 'Needs Max input',
+    linear_label: 'needs-max label',
+    ai_tag: 'AI: needs Max',
+    manual: 'Marked by you',
 };
 const SNAPSHOT_VERSION = 1; // bump when the snapshot shape changes; older baselines then read as 'unavailable' instead of a false diff
 
@@ -520,17 +551,24 @@ function CEODashboard(): React.ReactElement {
     const base = useBase();
     const tasksTable = base.getTableByIdIfExists(TASKS_TABLE_ID);
     const baselineTable = base.getTableByIdIfExists(BASELINE_TABLE_ID);
+    const lanesTable = base.getTableByIdIfExists(LANES_TABLE_ID);
     return (
         <WithRecords table={tasksTable}>
             {(tasks) => (
                 <WithRecords table={baselineTable}>
                     {(baseline) => (
-                        <Dashboard
-                            tasksTable={tasksTable}
-                            tasks={tasks}
-                            baselineTable={baselineTable}
-                            baselineRecords={baseline}
-                        />
+                        <WithRecords table={lanesTable}>
+                            {(lanes) => (
+                                <Dashboard
+                                    tasksTable={tasksTable}
+                                    tasks={tasks}
+                                    baselineTable={baselineTable}
+                                    baselineRecords={baseline}
+                                    lanesTable={lanesTable}
+                                    laneRecords={lanes}
+                                />
+                            )}
+                        </WithRecords>
                     )}
                 </WithRecords>
             )}
@@ -547,11 +585,15 @@ function Dashboard({
     tasks,
     baselineTable,
     baselineRecords,
+    lanesTable,
+    laneRecords,
 }: {
     tasksTable: Table | null;
     tasks: AtRecord[] | null;
     baselineTable: Table | null;
     baselineRecords: AtRecord[] | null;
+    lanesTable: Table | null;
+    laneRecords: AtRecord[] | null;
 }): React.ReactElement {
     const session = useSession();
     const userId = session?.currentUser?.id ?? null;
@@ -596,18 +638,86 @@ function Dashboard({
     // in "Ready for QA" and test data; without this filter they leak into every tile.
     const openTasks = readFailed ? [] : tasks!.filter((r) => text(r, T.lifecycle) === 'open');
 
-    // ---- NEEDS YOU ---- the open task waiting longest (oldest last_updated_at) from a healthy source
-    const needsYouTask = byOldest(openTasks.filter((r) => text(r, T.sourceStatus) === 'ok'))[0] ?? null;
+    // ---- NEEDS YOU ---- same rule as Today (MapKMigGon38570): open tasks with at least one Needs-You signal,
+    // the one waiting longest by the stored waiting_since first. Tasks without a valid date go last.
+    const needsYouReady = !!tasksTable && Object.values(N).every((id) => tasksTable.getFieldIfExists(id));
+    const signalsOf = (r: AtRecord) =>
+        (r.getCellValueAsString(N.signals) || '')
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+    const waitingMs = (r: AtRecord) => {
+        const v = raw(r, N.waitingSince);
+        const ms = v ? new Date(v).getTime() : NaN;
+        return Number.isNaN(ms) || ms > now + 60_000 ? null : ms;
+    };
+    const needsYouRows = needsYouReady
+        ? openTasks
+              .filter((r) => signalsOf(r).length > 0)
+              .sort((a, b) => {
+                  const wa = waitingMs(a);
+                  const wb = waitingMs(b);
+                  if (wa === null && wb === null) return (text(a, T.title) ?? '').localeCompare(text(b, T.title) ?? '');
+                  if (wa === null) return 1;
+                  if (wb === null) return -1;
+                  return wa - wb;
+              })
+        : [];
+    const needsYouTask = needsYouRows[0] ?? null;
     const needsYouTitle = needsYouTask ? text(needsYouTask, T.title) : null;
     const needsYouOwner = needsYouTask ? text(needsYouTask, T.owner) : null;
-    const needsYouDays = needsYouTask ? getDaysSince(raw(needsYouTask, T.lastUpdated)) : null;
-    const needsYouInsight =
-        needsYouDays !== null
-            ? `${needsYouDays} day${needsYouDays !== 1 ? 's' : ''} waiting — the longest of anything currently open.`
-            : null;
-    const needsYouMeta = [needsYouOwner ? `Owner: ${needsYouOwner}` : null, needsYouTask ? text(needsYouTask, T.source) : null]
-        .filter(Boolean)
-        .join(' · ');
+    const needsYouWaitMs = needsYouTask ? waitingMs(needsYouTask) : null;
+    const needsYouDays = needsYouWaitMs !== null ? Math.floor((now - needsYouWaitMs) / (1000 * 60 * 60 * 24)) : null;
+    const needsYouEstimated = needsYouTask ? text(needsYouTask, N.waitingBasis) === 'estimated' : false;
+    const needsYouInsight = needsYouTask
+        ? needsYouDays !== null
+            ? `${needsYouEstimated ? '~' : ''}${needsYouDays} day${needsYouDays !== 1 ? 's' : ''} waiting — the longest of ${needsYouRows.length} item${needsYouRows.length !== 1 ? 's' : ''} waiting on you.`
+            : `Waiting date pending — ${needsYouRows.length} item${needsYouRows.length !== 1 ? 's' : ''} waiting on you.`
+        : null;
+    const needsYouMeta = needsYouTask
+        ? [
+              signalsOf(needsYouTask).map((s) => SIGNAL_LABELS[s] ?? s).join(', '),
+              needsYouOwner ? `Owner: ${needsYouOwner}` : null,
+              text(needsYouTask, T.source),
+          ]
+              .filter(Boolean)
+              .join(' · ')
+        : '';
+
+    // ---- ON FIRE ---- the signed-in user's rank-1 fire from task_lanes, same store as Today (MapKMigGon38570).
+    const lanesReady = !!lanesTable && !!laneRecords && Object.values(L).every((id) => lanesTable.getFieldIfExists(id));
+    const taskById = new Map((tasks ?? []).map((r) => [r.id, r] as const));
+    const myFires = lanesReady
+        ? laneRecords!
+              .filter((r) => {
+                  const u = r.getCellValue(L.user) as { id?: string } | null;
+                  return u?.id === userId && r.getCellValueAsString(L.lane) === 'on_fire';
+              })
+              .sort(
+                  (a, b) =>
+                      ((a.getCellValue(L.rank) as number | null) ?? Number.MAX_SAFE_INTEGER) -
+                      ((b.getCellValue(L.rank) as number | null) ?? Number.MAX_SAFE_INTEGER),
+              )
+        : [];
+    const fireTask = (lane: AtRecord) => {
+        const links = lane.getCellValue(L.task) as { id: string }[] | null;
+        return links && links.length ? taskById.get(links[0].id) ?? null : null;
+    };
+    const topFireLane = myFires[0] ?? null;
+    const topFireTask = topFireLane ? fireTask(topFireLane) : null;
+    const topFireClosed = topFireTask ? text(topFireTask, T.lifecycle) !== 'open' : false;
+    const onFireInsight = topFireLane
+        ? `Rank 1 of ${myFires.length} fire${myFires.length !== 1 ? 's' : ''}` +
+          (topFireClosed ? ' — closed in its source; demote it in Today.' : '.')
+        : null;
+    const onFireMeta = topFireTask
+        ? [text(topFireTask, T.owner) ? `Owner: ${text(topFireTask, T.owner)}` : null, text(topFireTask, T.source)]
+              .filter(Boolean)
+              .join(' · ')
+        : '';
+    const onFireValue = myFires
+        .map((r) => `${(r.getCellValue(L.rank) as number | null) ?? '?'}:${(r.getCellValue(L.task) as { id: string }[] | null)?.[0]?.id ?? ''}`)
+        .join(',');
 
     // ---- RIGHT NOW ---- the event in progress and the next one today, from exact times.
     // Events that already ended are hidden here even before Loom's next sync closes them.
@@ -683,8 +793,16 @@ function Dashboard({
         ? null
         : TILE_ORDER.map((tileId): TileState => {
               switch (tileId) {
-                  case 'needs_you':
-                      return { tileId, status: needsYouTask ? 'ok' : 'empty', value: needsYouTask?.id ?? null };
+                  case 'on_fire': // the ranked set and its order; any promote, demote or reorder counts as a change
+                      if (!lanesReady) return { tileId, status: 'error', value: null };
+                      return { tileId, status: myFires.length ? 'ok' : 'empty', value: onFireValue || null };
+                  case 'needs_you': // who is waiting and who waits longest; day counts are not part of the diff
+                      if (!needsYouReady) return { tileId, status: 'error', value: null };
+                      return {
+                          tileId,
+                          status: needsYouTask ? 'ok' : 'empty',
+                          value: needsYouTask ? `${needsYouRows.length}|${needsYouTask.id}` : null,
+                      };
                   case 'right_now': // the set of events still ahead today; an event ending counts as a change
                       if (!calendarFieldsReady) return { tileId, status: 'error', value: null };
                       return { tileId, status: rightNowRows.length ? 'ok' : 'empty', value: idsOf(rightNowRows) || null };
@@ -692,7 +810,7 @@ function Dashboard({
                       return { tileId, status: approvalsSorted.length ? 'ok' : 'empty', value: `${approvalsSorted.length}|${idsOf(approvalsSorted)}` };
                   case 'qa':
                       return { tileId, status: qaSorted.length ? 'ok' : 'empty', value: `${qaSorted.length}|${idsOf(qaSorted)}` };
-                  default: // on_fire, revenue_mix, audit_decisions: no data source yet
+                  default: // revenue_mix, audit_decisions: no data source yet
                       return { tileId, status: 'unavailable', value: null };
               }
           });
@@ -745,7 +863,19 @@ function Dashboard({
                     <LargeInsightCard
                         label="ON FIRE"
                         navLabel="Today →"
-                        placeholder={failed('On Fire') ?? 'Unavailable — ranking logic not built yet (CC3).'}
+                        title={topFireTask ? text(topFireTask, T.title) : topFireLane ? 'Task no longer available' : null}
+                        insight={onFireInsight}
+                        meta={onFireMeta || null}
+                        moreLabel="Open in source"
+                        moreUrl={topFireTask ? text(topFireTask, T.sourceUrl) : null}
+                        placeholder={
+                            failed('On Fire') ??
+                            (!lanesReady
+                                ? 'Fire ranking unavailable: enable task_lanes (user, task, lane, rank_position) for this page.'
+                                : topFireLane
+                                  ? undefined
+                                  : 'No fires ranked yet. Rank up to three in Today.')
+                        }
                         diffStatus={diffFor('on_fire')}
                     />
                     <LargeInsightCard
@@ -756,7 +886,14 @@ function Dashboard({
                         meta={needsYouMeta || null}
                         moreLabel="Open in source"
                         moreUrl={needsYouTask ? text(needsYouTask, T.sourceUrl) : null}
-                        placeholder={failed('Needs You') ?? (needsYouTask ? undefined : 'No tasks needing attention.')}
+                        placeholder={
+                            failed('Needs You') ??
+                            (!needsYouReady
+                                ? 'Needs You unavailable: enable needs_you_signals, waiting_since and waiting_since_basis for this page.'
+                                : needsYouTask
+                                  ? undefined
+                                  : 'Nobody is waiting on you right now.')
+                        }
                         diffStatus={diffFor('needs_you')}
                     />
                 </div>
