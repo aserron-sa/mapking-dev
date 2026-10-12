@@ -27,7 +27,8 @@
  *     are logged once per session as needs_you_data_issue.
  *   - Max can mark any open task as needing him (signal 5, task_lanes.needs_you_manual)
  *     and unmark it; both are logged as needs_you_mark.
- *
+ * 
+ * todo:
  * Block 3c (persisted Power Hour on power_hour_items) is still pending: that
  * section is unchanged.
  *
