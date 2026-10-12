@@ -28,9 +28,15 @@
  *   - Max can mark any open task as needing him (signal 5, task_lanes.needs_you_manual)
  *     and unmark it; both are logged as needs_you_mark.
  * 
- * todo:
- * Block 3c (persisted Power Hour on power_hour_items) is still pending: that
- * section is unchanged.
+ * Block 3c: persisted Power Hour.
+ *   - Today's checklist lives in power_hour_items (one row per item, per user and
+ *     day): order (position), completion (done / done_at), and either a link to a
+ *     task or a manual text. It survives reloads; nothing is written to the source.
+ *   - Max builds the list: open tasks from a search picker, or manual items.
+ *     Suggestions (short open tasks) are advisory only: one click adds them.
+ *   - Toggle, reorder (▲▼) and remove; every change is logged as power_hour_update.
+ *   - If the power_hour_items fields are not visible to the extension, only this
+ *     section shows the missing list; fires and Needs-You keep working.
  *
  * Schema and IDs: docs/38570/schema.md
  */
@@ -56,6 +62,7 @@ const IDS = {
   tasksTable: 'tblX61yfIFroyhMTj',
   lanesTable: 'tblZhorxkVfKdsW3Z',
   eventsTable: 'tbl0k4YFnduwhMJG2',
+  powerTable: 'tblwFsPqbejWWYPmf',
   tasks: {
     title: 'fld4JRaVYnwttmi4P',
     owner: 'fldECSTk2LFWGIS6V',
@@ -90,6 +97,16 @@ const IDS = {
     after: 'fldxLPzLdJMIP5LoR',
     message: 'fldBZdiRQ4ThpYEgX',
   },
+  power: {
+    itemKey: 'fld1uNujJmPLYGMdp',
+    user: 'fldRsb0SvtZRsl9DI',
+    date: 'fldfPO5yng5qoz5gB',
+    position: 'fldYkzdKbVee1UqJL',
+    done: 'fldLie1uMaPVSG5C4',
+    task: 'fldfuzhbRFcdSjdkM',
+    manualText: 'fldSY9AxNxlOECBK3',
+    doneAt: 'fldGUZLB1bxB2wTlc',
+  },
 };
 
 const MAX_FIRES = 3;
@@ -119,7 +136,7 @@ const BASIS_LABELS: Record<string, string> = {
  * enabled behaves as if it did not exist. Missing fields are listed on screen
  * instead of crashing the page.
  */
-const REQUIRED_FIELDS: Record<'tasks' | 'lanes' | 'events', Record<string, string>> = {
+const REQUIRED_FIELDS: Record<'tasks' | 'lanes' | 'events' | 'power', Record<string, string>> = {
   tasks: {
     [IDS.tasks.title]: 'title',
     [IDS.tasks.owner]: 'owner',
@@ -154,6 +171,16 @@ const REQUIRED_FIELDS: Record<'tasks' | 'lanes' | 'events', Record<string, strin
     [IDS.events.after]: 'after',
     [IDS.events.message]: 'message',
   },
+  power: {
+    [IDS.power.itemKey]: 'item_key',
+    [IDS.power.user]: 'user',
+    [IDS.power.date]: 'date',
+    [IDS.power.position]: 'position',
+    [IDS.power.done]: 'done',
+    [IDS.power.task]: 'task',
+    [IDS.power.manualText]: 'manual_text',
+    [IDS.power.doneAt]: 'done_at',
+  },
 };
 
 function missingFields(table: Table | undefined, tableLabel: string, fields: Record<string, string>): string[] {
@@ -175,6 +202,7 @@ function getCustomProperties(base: any) {
     { key: 'tasksTable', label: 'Tasks', type: 'table' as const, defaultValue: find(IDS.tasksTable) },
     { key: 'fireRanksTable', label: 'Task lanes (fire ranks)', type: 'table' as const, defaultValue: find(IDS.lanesTable) },
     { key: 'eventsTable', label: 'Priority events (log)', type: 'table' as const, defaultValue: find(IDS.eventsTable) },
+    { key: 'powerHourTable', label: 'Power hour items', type: 'table' as const, defaultValue: find(IDS.powerTable) },
   ];
 }
 
@@ -544,6 +572,140 @@ class NeedsYouService {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Power Hour service — persisted checklist (power_hour_items)
+// ─────────────────────────────────────────────────────────────────────────────
+
+type PowerItem = {
+  id: string;
+  position: number;
+  done: boolean;
+  taskId: string | null;
+  manualText: string | null;
+  title: string;
+  sourceName: string | null;
+  closedInSource: boolean;
+  missingTask: boolean;
+};
+
+/** Local calendar day of the viewer, as Airtable stores a date field: YYYY-MM-DD. */
+function localDay(d: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+class PowerHourService {
+  constructor(private table: Table, private log: EventLog, private userId: string) {}
+
+  private key(day: string, position: number) {
+    return `${day} · ${position}`;
+  }
+
+  private async ok(message: string, taskId: string | null, ids: string[], before?: unknown, after?: unknown): Promise<OpResult> {
+    await this.log.write({ type: 'power_hour_update', status: 'ok', taskId, laneIds: ids, before, after, message });
+    return { status: 'ok', message: '' };
+  }
+
+  private async failed(error: any, taskId: string | null, ids: string[]): Promise<OpResult> {
+    const message = `Airtable rejected the change (${error?.message ?? 'unknown error'}). Nothing was changed.`;
+    await this.log.write({ type: 'airtable_error', status: 'dependency_failed', taskId, laneIds: ids, message });
+    return { status: 'dependency_failed', message };
+  }
+
+  private async denied(taskId: string | null): Promise<OpResult> {
+    const message = "You don't have permission to change the Power Hour.";
+    await this.log.write({ type: 'validation_failed', status: 'validation_failed', taskId, message });
+    return { status: 'validation_failed', message };
+  }
+
+  /** Add a task (link only, no content copied) or a manual item at the end of today's list. */
+  async add(day: string, items: PowerItem[], entry: { taskId?: string; text?: string }): Promise<OpResult> {
+    const P = IDS.power;
+    const text = entry.text?.trim() ?? '';
+    if (!entry.taskId && !text) return { status: 'validation_failed', message: 'Write something to add.' };
+    if (entry.taskId && items.some((i) => i.taskId === entry.taskId)) {
+      return { status: 'validation_failed', message: "This task is already in today's power hour." };
+    }
+    if (!this.table.hasPermissionToCreateRecords()) return this.denied(entry.taskId ?? null);
+
+    const position = items.reduce((max, i) => Math.max(max, i.position), 0) + 1;
+    try {
+      const id = await this.table.createRecordAsync({
+        [P.itemKey]: this.key(day, position),
+        [P.user]: { id: this.userId },
+        [P.date]: day,
+        [P.position]: position,
+        [P.done]: false,
+        ...(entry.taskId ? { [P.task]: [{ id: entry.taskId }] } : { [P.manualText]: text }),
+      });
+      return this.ok(entry.taskId ? `add task → position ${position}` : `add manual item → position ${position}`, entry.taskId ?? null, [id], undefined, {
+        position,
+        manual: !entry.taskId,
+      });
+    } catch (e) {
+      return this.failed(e, entry.taskId ?? null, []);
+    }
+  }
+
+  async toggle(item: PowerItem, done: boolean): Promise<OpResult> {
+    const P = IDS.power;
+    if (!this.table.hasPermissionToUpdateRecords()) return this.denied(item.taskId);
+    try {
+      await this.table.updateRecordAsync(item.id, { [P.done]: done, [P.doneAt]: done ? new Date().toISOString() : null });
+      return this.ok(done ? 'checked' : 'unchecked', item.taskId, [item.id], { done: item.done }, { done });
+    } catch (e) {
+      return this.failed(e, item.taskId, [item.id]);
+    }
+  }
+
+  /** Swap with the neighbour and renumber 1..n in one batch, so the order never has gaps or duplicates. */
+  async move(day: string, items: PowerItem[], itemId: string, direction: 'up' | 'down'): Promise<OpResult> {
+    const P = IDS.power;
+    const index = items.findIndex((i) => i.id === itemId);
+    const swapWith = direction === 'up' ? index - 1 : index + 1;
+    if (index < 0 || swapWith < 0 || swapWith >= items.length) {
+      return { status: 'validation_failed', message: `This item is already ${direction === 'up' ? 'first' : 'last'}.` };
+    }
+    if (!this.table.hasPermissionToUpdateRecords()) return this.denied(items[index].taskId);
+    const reordered = [...items];
+    [reordered[index], reordered[swapWith]] = [reordered[swapWith], reordered[index]];
+    const changes = reordered.flatMap((item, i) =>
+      item.position === i + 1 ? [] : [{ id: item.id, fields: { [P.position]: i + 1, [P.itemKey]: this.key(day, i + 1) } }]
+    );
+    try {
+      if (changes.length) await this.table.updateRecordsAsync(changes);
+      return this.ok(`reorder ${index + 1} → ${swapWith + 1}`, items[index].taskId, changes.map((c) => c.id),
+        items.map((i) => ({ id: i.id, position: i.position })),
+        reordered.map((i, n) => ({ id: i.id, position: n + 1 })));
+    } catch (e) {
+      return this.failed(e, items[index].taskId, changes.map((c) => c.id));
+    }
+  }
+
+  /** Remove an item from today's list, then close the gap (best effort). */
+  async remove(day: string, items: PowerItem[], itemId: string): Promise<OpResult> {
+    const P = IDS.power;
+    const item = items.find((i) => i.id === itemId);
+    if (!item) return { status: 'validation_failed', message: 'This item is no longer on the list.' };
+    if (!this.table.hasPermissionToDeleteRecords()) return this.denied(item.taskId);
+    try {
+      await this.table.deleteRecordAsync(item.id);
+    } catch (e) {
+      return this.failed(e, item.taskId, [item.id]);
+    }
+    const rest = items.filter((i) => i.id !== itemId);
+    const changes = rest.flatMap((r, i) =>
+      r.position === i + 1 ? [] : [{ id: r.id, fields: { [P.position]: i + 1, [P.itemKey]: this.key(day, i + 1) } }]
+    );
+    try {
+      if (changes.length) await this.table.updateRecordsAsync(changes);
+    } catch (e) {
+      console.warn('power hour renumber after remove failed; order is still consistent', e);
+    }
+    return this.ok('remove', item.taskId, [item.id], { position: item.position, done: item.done, manual: !item.taskId }, null);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // UI components
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -868,78 +1030,158 @@ function NeedsYouRow({ item, busy, onUnmark }: { item: NeedsYouItem; busy: boole
   );
 }
 
-// ── Power Hour (unchanged until block 3c: completion is session-local) ──────
+// ── Power Hour (persisted) ──────
 
-function PowerHour({ seedTasks }: { seedTasks: { id: string; title: string; sourceName: string | null }[] }) {
-  const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
-  const [customItems, setCustomItems] = useState<{ id: string; text: string; done: boolean }[]>([]);
+function PowerHour({
+  items,
+  suggestions,
+  pickerTasks,
+  getDetails,
+  busy,
+  unavailable,
+  onAddTask,
+  onAddManual,
+  onToggle,
+  onMove,
+  onRemove,
+}: {
+  items: PowerItem[];
+  suggestions: { id: string; title: string; sourceName: string | null }[];
+  pickerTasks: any[];
+  getDetails: (task: any) => { title: string; sourceName: string | null };
+  busy: boolean;
+  unavailable: string[];
+  onAddTask: (taskId: string) => void;
+  onAddManual: (text: string) => Promise<OpResult>;
+  onToggle: (item: PowerItem) => void;
+  onMove: (item: PowerItem, direction: 'up' | 'down') => void;
+  onRemove: (item: PowerItem) => void;
+}) {
   const [draft, setDraft] = useState('');
 
-  const toggleSeed = (id: string) => {
-    setDoneIds((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
-  const addCustom = () => {
-    if (!draft.trim()) return;
-    setCustomItems((prev) => [...prev, { id: `${Date.now()}`, text: draft.trim(), done: false }]);
-    setDraft('');
-  };
-  const toggleCustom = (id: string) => {
-    setCustomItems((prev) => prev.map((i) => (i.id === id ? { ...i, done: !i.done } : i)));
-  };
+  if (unavailable.length) {
+    return (
+      <div className="bg-gray-800 rounded-lg p-5">
+        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Power Hour</p>
+        <p className="text-sm mb-2" style={{ color: ORANGE }}>
+          The Power Hour cannot load: enable these fields for the extension, then reload.
+        </p>
+        <ul className="text-xs text-gray-300 list-disc ml-5">
+          {unavailable.map((m) => (
+            <li key={m}>{m}</li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
 
-  const doneCount = seedTasks.filter((t) => doneIds.has(t.id)).length + customItems.filter((i) => i.done).length;
-  const totalCount = seedTasks.length + customItems.length;
+  const doneCount = items.filter((i) => i.done).length;
+  const addManual = async () => {
+    if (!draft.trim()) return;
+    const result = await onAddManual(draft);
+    if (result.status === 'ok') setDraft('');
+  };
 
   return (
     <div className="bg-gray-800 rounded-lg p-5">
       <div className="flex items-center justify-between mb-1">
         <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Power Hour</p>
         <p className="text-xs text-gray-500">
-          {doneCount} of {totalCount} done
+          {doneCount} of {items.length} done
         </p>
       </div>
       <p className="text-xs mb-4" style={{ color: MUTED }}>
-        Seeded from your open tasks. Checkmarks are local to this session — persisted completion arrives with the next update.
+        Today's quick wins. Saved as you go: order and checkmarks stay when you come back.
       </p>
+
       <div className="space-y-2 mb-4">
-        {seedTasks.map((t) => (
-          <label key={t.id} className="flex items-center gap-2 text-sm text-gray-200" title={t.title}>
-            <input type="checkbox" checked={doneIds.has(t.id)} onChange={() => toggleSeed(t.id)} />
-            <span className={doneIds.has(t.id) ? 'line-through text-gray-500 flex-1 truncate' : 'flex-1 truncate'}>
-              {t.title}
-            </span>
-            {t.sourceName && <Pill text={t.sourceName} />}
-          </label>
-        ))}
-        {customItems.map((item) => (
-          <label key={item.id} className="flex items-center gap-2 text-sm text-gray-200">
-            <input type="checkbox" checked={item.done} onChange={() => toggleCustom(item.id)} />
-            <span className={item.done ? 'line-through text-gray-500 flex-1' : 'flex-1'}>{item.text}</span>
-            <Pill text="Manual" />
-          </label>
-        ))}
-        {seedTasks.length === 0 && customItems.length === 0 && (
+        {items.length === 0 && (
           <p className="text-sm" style={{ color: MUTED }}>
             Nothing queued for this power hour yet.
           </p>
         )}
+        {items.map((item, i) => (
+          <div key={item.id} className="flex items-center gap-2 text-sm text-gray-200" title={item.title}>
+            <input type="checkbox" checked={item.done} disabled={busy} onChange={() => onToggle(item)} />
+            <span className={item.done ? 'line-through text-gray-500 flex-1 truncate' : 'flex-1 truncate'}>{item.title}</span>
+            {item.closedInSource && <Pill text="Closed in source" color={RED} />}
+            {item.missingTask && <Pill text="Task no longer available" color={RED} />}
+            {item.taskId ? item.sourceName && <Pill text={item.sourceName} /> : <Pill text="Manual" />}
+            <button
+              onClick={() => onMove(item, 'up')}
+              disabled={busy || i === 0}
+              className="text-xs text-gray-400 hover:text-white disabled:opacity-30"
+              title="Move up"
+            >
+              ▲
+            </button>
+            <button
+              onClick={() => onMove(item, 'down')}
+              disabled={busy || i === items.length - 1}
+              className="text-xs text-gray-400 hover:text-white disabled:opacity-30"
+              title="Move down"
+            >
+              ▼
+            </button>
+            <button
+              onClick={() => onRemove(item)}
+              disabled={busy}
+              className="text-xs text-gray-500 hover:text-gray-300 disabled:opacity-40"
+              title="Remove from today's power hour"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
       </div>
+
+      {suggestions.length > 0 && (
+        <div className="mb-4">
+          <p className="text-[11px] uppercase tracking-wider text-gray-500 mb-1">Suggested · short open tasks</p>
+          <div className="flex flex-wrap gap-2">
+            {suggestions.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => onAddTask(s.id)}
+                disabled={busy}
+                className="text-xs text-gray-300 bg-gray-900 border border-gray-700 rounded-md px-2 py-1 hover:text-white disabled:opacity-40 max-w-full truncate"
+                title={`Add: ${s.title}`}
+              >
+                + {s.title}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-2">
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && addCustom()}
+          onKeyDown={(e) => e.key === 'Enter' && addManual()}
           placeholder="Add a manual item…"
+          disabled={busy}
           className="flex-1 bg-gray-900 border border-gray-700 rounded-md px-3 py-1.5 text-sm text-white"
         />
-        <button onClick={addCustom} className="text-xs text-gray-300 bg-gray-900 border border-gray-700 rounded-md px-3 py-1.5">
+        <button
+          onClick={addManual}
+          disabled={busy}
+          className="text-xs text-gray-300 bg-gray-900 border border-gray-700 rounded-md px-3 py-1.5 disabled:opacity-40"
+        >
           Add
         </button>
       </div>
+
+      <details className="text-sm mt-3">
+        <summary className="cursor-pointer text-gray-400">Add an open task</summary>
+        <TaskPicker
+          tasks={pickerTasks}
+          getDetails={getDetails}
+          busy={busy}
+          onPick={(taskId) => onAddTask(taskId)}
+          emptyText="No open tasks to add."
+        />
+      </details>
     </div>
   );
 }
@@ -956,9 +1198,11 @@ function TodayApp(): React.ReactElement {
   const tasksTable = customPropertyValueByKey.tasksTable as Table | undefined;
   const lanesTable = customPropertyValueByKey.fireRanksTable as Table | undefined;
   const eventsTable = customPropertyValueByKey.eventsTable as Table | undefined;
+  const powerTable = customPropertyValueByKey.powerHourTable as Table | undefined;
 
   const tasksRecords = useRecords(tasksTable ?? null);
   const laneRecords = useRecords(lanesTable ?? null);
+  const powerRecords = useRecords(powerTable ?? null);
 
   const addFiresRef = useRef<HTMLDetailsElement>(null);
   const [pendingTaskToAdd, setPendingTaskToAdd] = useState<{ id: string; title: string } | null>(null);
@@ -1079,13 +1323,58 @@ function TodayApp(): React.ReactElement {
     });
   }, [needsYouItems, eventsTable, currentUser, busy]);
 
-  // ── Power Hour seed (unchanged until block 3c) ─────────────────────────────
-  const powerHourSeed = useMemo(() => {
-    const withDetails = availableTasksForFire.map((t) => ({ t, d: getTaskDetails(t) }));
-    const short = withDetails.filter(({ d }) => d.title.length <= 60);
-    const chosen = (short.length >= 5 ? short : withDetails).slice(0, 5);
-    return chosen.map(({ t, d }) => ({ id: t.id, title: d.title, sourceName: d.sourceName }));
-  }, [availableTasksForFire]);
+  // ── Power Hour (persisted in power_hour_items) ────────────────────────────────────
+  const today = localDay();
+  const PW = IDS.power;
+  const powerMissing = missingFields(powerTable, 'power_hour_items', REQUIRED_FIELDS.power);
+
+  // Today's items of the current user, in their stored order.
+  const powerItems: PowerItem[] = useMemo(() => {
+    if (!powerRecords || !currentUser || powerMissing.length) return [];
+    return powerRecords
+      .filter(
+        (r) =>
+          (readCell(r, powerTable, PW.user) as { id: string } | null)?.id === currentUser.id &&
+          readCell(r, powerTable, PW.date) === today
+      )
+      .map((r) => {
+        const links = readCell(r, powerTable, PW.task) as { id: string }[] | null;
+        const taskId = links && links.length ? links[0].id : null;
+        const task = taskId ? taskById.get(taskId) : undefined;
+        const manualText = (readCell(r, powerTable, PW.manualText) as string | null) ?? null;
+        return {
+          id: r.id,
+          position: (readCell(r, powerTable, PW.position) as number | null) ?? Number.MAX_SAFE_INTEGER,
+          done: Boolean(readCell(r, powerTable, PW.done)),
+          taskId,
+          manualText,
+          title: task ? getTaskDetails(task).title : taskId ? 'Task no longer available' : manualText ?? 'Untitled',
+          sourceName: task ? getTaskDetails(task).sourceName : null,
+          closedInSource: task ? !isOpen(task) : false,
+          missingTask: Boolean(taskId) && !task,
+        };
+      })
+      .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id));
+  }, [powerRecords, currentUser, powerTable, today, taskById, powerMissing.length]);
+
+  const powerTaskIds = useMemo(() => new Set(powerItems.map((i) => i.taskId).filter(Boolean) as string[]), [powerItems]);
+
+  // Open tasks that can be added (not fires, not already in today's list).
+  const powerPickerTasks = useMemo(
+    () => availableTasksForFire.filter((t) => !powerTaskIds.has(t.id)),
+    [availableTasksForFire, powerTaskIds]
+  );
+
+  // Advisory suggestions: short titles read as quick wins. One click adds them; nothing is added automatically.
+  const powerSuggestions = useMemo(
+    () =>
+      powerPickerTasks
+        .map((t) => ({ id: t.id, ...getTaskDetails(t) }))
+        .filter((d) => d.title.length <= 60)
+        .slice(0, 4)
+        .map((d) => ({ id: d.id, title: d.title, sourceName: d.sourceName })),
+    [powerPickerTasks]
+  );
 
   // ── Operations (one at a time: double clicks are blocked synchronously) ────────
   const guarded = async (fn: () => Promise<OpResult>): Promise<OpResult> => {
@@ -1131,6 +1420,13 @@ function TodayApp(): React.ReactElement {
         hasWaitingSince
       )
     );
+  };
+
+  const powerOp = (fn: (service: PowerHourService) => Promise<OpResult>): Promise<OpResult> => {
+    if (!powerTable || !currentUser || powerMissing.length) {
+      return Promise.resolve({ status: 'dependency_failed', message: 'The power hour table is not available.' } as OpResult);
+    }
+    return guarded(() => fn(new PowerHourService(powerTable, new EventLog(eventsTable, currentUser.id), currentUser.id)));
   };
 
   const handleAddFire = async (taskId: string, title: string) => {
@@ -1310,7 +1606,19 @@ function TodayApp(): React.ReactElement {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <section>
             <p className="text-sm font-bold text-white mb-3">Power Hour</p>
-            <PowerHour seedTasks={powerHourSeed} />
+            <PowerHour
+              items={powerItems}
+              suggestions={powerSuggestions}
+              pickerTasks={powerPickerTasks}
+              getDetails={getTaskDetails}
+              busy={busy}
+              unavailable={powerMissing}
+              onAddTask={(taskId) => powerOp((s) => s.add(today, powerItems, { taskId }))}
+              onAddManual={(text) => powerOp((s) => s.add(today, powerItems, { text }))}
+              onToggle={(item) => powerOp((s) => s.toggle(item, !item.done))}
+              onMove={(item, direction) => powerOp((s) => s.move(today, powerItems, item.id, direction))}
+              onRemove={(item) => powerOp((s) => s.remove(today, powerItems, item.id))}
+            />
           </section>
 
           <section>

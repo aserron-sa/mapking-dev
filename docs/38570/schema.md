@@ -80,6 +80,8 @@ Event log for the daily priority list. Never delete rows.
 
 Persisted Power Hour checklist (order + completion). Never written back to the source system; linked tasks store only the link.
 
+Behavior (Today, block 3c): the list shown is the current user's rows whose `date` is today in the viewer's local time. Max adds open tasks (search picker) or manual items; up to 4 short open tasks are offered as one-click suggestions (advisory, never added automatically). Checking sets `done` and `done_at`; reorder renumbers `position` 1..n in one batch (and rewrites `item_key`); remove deletes the row and closes the gap. A task can appear only once per day. Every change is logged in `priority_events` as `power_hour_update` (errors as `airtable_error`). Unfinished items do not carry over to the next day.
+
 | Field | ID | Type |
 |---|---|---|
 | item_key (primary) | `fld1uNujJmPLYGMdp` | single line text: `<YYYY-MM-DD> · <position>` |
