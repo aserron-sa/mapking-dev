@@ -56,6 +56,7 @@ Status comparisons are case-insensitive. Snapshot on 2026-10-11: 113 open tasks,
 - Cleared when all signals disappear or the task closes; a later signal starts a new wait.
 - Basis: `manual` = `needs_you_manual_at` (exact); `first_seen` = when Airtable first saw an automatic signal (precision = Loom sync frequency, today once per business day); `estimated` = initial backfill from `last_updated_at` for tasks already waiting at rollout.
 - Days waiting = now − `waiting_since`. Missing or invalid → end of the list and a `needs_you_data_issue` event.
+- Manual mark (Today, block 3b): Max marks or unmarks any open task. If he already has a `task_lanes` row for it, only `needs_you_manual` changes (lane and rank untouched); otherwise a row is created in lane `waiting_on` (prototype: Waiting On · Blocked on you). Marking a task with no `waiting_since` stamps it immediately (basis `manual`); the hourly automation remains the reconciler. Both actions are logged as `needs_you_mark`.
 
 ## New table `priority_events` (`tbl0k4YFnduwhMJG2`)
 
@@ -64,7 +65,7 @@ Event log for the daily priority list. Never delete rows.
 | Field | ID | Type |
 |---|---|---|
 | summary (primary) | `fldxNmEoRpB4SRouZ` | single line text |
-| event_type | `fldu8UXkQBfrIHvZe` | single select: promote, demote, reorder, validation_failed, airtable_error, compensation, guard_fix, dedupe, needs_you_data_issue, power_hour_update |
+| event_type | `fldu8UXkQBfrIHvZe` | single select: promote, demote, reorder, validation_failed, airtable_error, compensation, guard_fix, dedupe, needs_you_data_issue, power_hour_update, needs_you_mark (added by hand: the API cannot add select options) |
 | status | `fldL2k5qUjcOasDxU` | single select: ok, demotion_required, validation_failed, dependency_failed |
 | source | `fldIj7BNfY7f13atJ` | single select: extension, automation |
 | user | `fldzCkpn3zNyG6Ehm` | collaborator |
