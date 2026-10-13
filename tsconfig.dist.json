@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "airtable/cct/dist/interfaces/**/*.tsx",
+    "airtable/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

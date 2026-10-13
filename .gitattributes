@@ -1,0 +1,36 @@
+# Line endings: LF everywhere in this repo (working tree and repository).
+# Without this, git on Windows (core.autocrlf=true) converts LF<->CRLF and shows
+# unchanged files as modified. Binary files are never touched.
+* text=auto eol=lf
+
+# Explicit text types (belt and braces for tools that skip auto-detection)
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.js    text eol=lf
+*.jsx   text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.css   text eol=lf
+*.html  text eol=lf
+*.sh    text eol=lf
+
+# Windows-only scripts keep CRLF
+*.ps1   text eol=crlf
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+
+# Binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.zip   binary
+*.docx  binary
+*.xlsx  binary
+*.pptx  binary
+*.woff  binary
+*.woff2 binary
