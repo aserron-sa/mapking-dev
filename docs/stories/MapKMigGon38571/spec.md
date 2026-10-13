@@ -32,14 +32,14 @@ Loom (daily 07:47 CT + Slack)  ──>  command_center_tasks   (Loom fields, unc
                                           │
 triage_configs + team_members ──┐          │
                                ▼          ▼
-            triage-compute.js  (Airtable automation, hourly)
-              · rules: airtable/cct/lib/triage-rules.js (pure, unit-tested, inlined at build)
+            cct-triage-compute.ts  (Airtable automation, hourly)
+              · rules: airtable/cct/cct-triage-rules.ts (pure, unit-tested, inlined at build)
               · writes only command_center_triages (one row per task, 1:1)
               · logs to priority_events
                                           │
                                           ▼
 Work · Queue extension
-  · triageContract.ts (pure, unit-tested): builds triage rows, applies and validates filters,
+  · cct-triage-contract.ts (pure, unit-tested): builds triage rows, applies and validates filters,
     provenance, completeness
   · reads command_center_tasks + command_center_triages (joined by normalized_task_id)
     + the signed-in user's task_lanes + loom_sync_runs
@@ -50,11 +50,11 @@ Work · Queue extension
 |---|---|---|
 | Loom | Ingestion, normalization, AI enrichment (`category`, `tags`, `schedulable`) | Hyperagent · 38532 |
 | `triage_configs`, `team_members` | Configurable rules and roster | Airtable |
-| `triage-rules.js` | Pure rule functions: lane, stale, delegate, owner, identity | `airtable/cct/lib/` |
-| `triage-compute.js` | Hourly automation: read, evaluate, upsert triage rows, log | `airtable/cct/automations/` (+ built copy to paste) |
+| `cct-triage-rules.ts` | Pure rule functions: lane, stale, delegate, owner, identity | `airtable/cct/` |
+| `cct-triage-compute.ts` | Hourly automation: read, evaluate, upsert triage rows, log | `airtable/cct/automations/` (+ built copy to paste) |
 | `command_center_triages` | Triage output, one row per task (1:1), written only by the script | Airtable, new |
-| `triageContract.ts` | Pure triage-row and filter logic for the page | `airtable/cct/interface/` |
-| `WorkQueuePage.tsx` | The Work · Queue page | `airtable/cct/interface/` |
+| `cct-triage-contract.ts` | Pure triage-row and filter logic for the page | `airtable/cct/interfaces/` |
+| `cct-work-queue.tsx` | The Work · Queue page | `airtable/cct/interfaces/` |
 | `task_lanes` | Per-user manual decisions; shared with 38570 (Today, On Fire top 3) | Airtable, unchanged |
 | `priority_events` | Event log | Airtable |
 
@@ -72,7 +72,7 @@ See `schema.md` for every field, type, default and ID. Summary:
 - **New `priority_events` types:** `triage_compute`, `triage_data_issue`, `triage_filter_invalid`, `triage_action`.
 - **`task_lanes`:** unchanged.
 
-## 4. Rules (`triage-rules.js`)
+## 4. Rules (`cct-triage-rules.ts`)
 
 All rules are pure functions of (task row, config, roster, today in `timezone`). Same inputs → same output. No AI.
 
@@ -129,7 +129,7 @@ Eligible when all are true:
 - Otherwise `unique`.
 - Nothing is merged, hidden or deleted. Work · Queue groups rows that share a key.
 
-## 5. Triage contract (`triageContract.ts`)
+## 5. Triage contract (`cct-triage-contract.ts`)
 
 ### 5.1 Triage row
 
@@ -191,7 +191,7 @@ On load, the page checks that every field it uses exists and is visible to the e
 
 ### 5.5 Existing Work · Queue behavior to keep
 
-Built by Carlos Olivares (2026-09-17, docx "Work · Queue (Triage por Lanes)", same file as the SS evidence) and confirmed by him manually. Source recovered 2026-10-12: `airtable/cct/interface/WorkQueuePage.tsx` (Airtable code-editor project: `frontend/index.tsx` + `style.css`; template files in `extension-template/`). Not part of this AC, but it must keep working (regression R2):
+Built by Carlos Olivares (2026-09-17, docx "Work · Queue (Triage por Lanes)", same file as the SS evidence) and confirmed by him manually. Source recovered 2026-10-12: `airtable/cct/interfaces/cct-work-queue.tsx` (Airtable code-editor project: `frontend/index.tsx` + `style.css`; template files in `extension-template/`). Not part of this AC, but it must keep working (regression R2):
 
 - Queue / Delivery toggle (Delivery = "Coming soon — CC9" placeholder).
 - Lane tabs with live counts; single-select filter pills with "Clear filters".
@@ -204,7 +204,7 @@ Changes this story makes to that behavior:
 
 | Carlos's version | This story |
 |---|---|
-| Stale = past due + `last_updated_at` unchanged ≥ 2 days + no action, hard-coded in the page | `stale_state` from `triage-compute.js` and `triage_configs` (4.3). The page hides the stale badge and the forced Done/Drop/Reschedule buttons when the user already took an action (`action_status` ≠ none), as Carlos's rule did |
+| Stale = past due + `last_updated_at` unchanged ≥ 2 days + no action, hard-coded in the page | `stale_state` from `cct-triage-compute.ts` and `triage_configs` (4.3). The page hides the stale badge and the forced Done/Drop/Reschedule buttons when the user already took an action (`action_status` ≠ none), as Carlos's rule did |
 | Filters: one value per dimension | Same pills, plus combined values, lane filter, "No domain" / "Unassigned" and validation (5.2) |
 | Tasks without a `task_lanes` row appear only in "All" | Every task has a lane: manual or rule (5.1) |
 | Owner as written by the source | `owner_canonical` (4.1); the raw owner stays visible in the detail panel |

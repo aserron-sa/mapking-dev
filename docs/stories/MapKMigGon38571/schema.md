@@ -19,8 +19,8 @@ Code (scripts and extension) always uses the IDs below, never names.
 | Writer | Table | Fields it writes |
 |---|---|---|
 | Loom (Hyperagent) | `command_center_tasks`, `loom_sync_runs` | Its own fields only (see `claude/spec-MapKMigGon38532.md`) |
-| `triage-compute.js` (automation, hourly) | `command_center_triages` | Every field (creates and updates rows, marks closed and orphan rows; never deletes) |
-| `triage-compute.js` | `priority_events` | `triage_compute`, `triage_data_issue` |
+| `cct-triage-compute.ts` (automation, hourly) | `command_center_triages` | Every field (creates and updates rows, marks closed and orphan rows; never deletes) |
+| `cct-triage-compute.ts` | `priority_events` | `triage_compute`, `triage_data_issue` |
 | Work · Queue (extension) | `task_lanes` | lane, overrides, `delegated_to`, `action_status` (existing fields) |
 | Work · Queue | `priority_events` | `triage_action`, `triage_filter_invalid` |
 | Andrés / Max (by hand) | `triage_configs`, `team_members` | Everything (configuration) |
@@ -72,7 +72,7 @@ Seeded 2026-10-12 (step 2), from owners seen in `command_center_tasks` on 2026-1
 
 ## New table `command_center_triages` (1:1 with `command_center_tasks`)
 
-Decided 2026-10-12: the triage output lives in its own table instead of 12 new fields in `command_center_tasks`, which already has about 35 fields from three owners (Loom, 38570, links). Each table has one writer: Loom → `command_center_tasks`, `triage-compute.js` → `command_center_triages`, people → `task_lanes`.
+Decided 2026-10-12: the triage output lives in its own table instead of 12 new fields in `command_center_tasks`, which already has about 35 fields from three owners (Loom, 38570, links). Each table has one writer: Loom → `command_center_tasks`, `cct-triage-compute.ts` → `command_center_triages`, people → `task_lanes`.
 
 Airtable has no native 1:1 relation. The script enforces it:
 
