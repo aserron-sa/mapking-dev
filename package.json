@@ -1,0 +1,25 @@
+{
+  "name": "mapking-dev",
+  "private": true,
+  "type": "module",
+  "description": "Map King Hub tooling: Airtable automations (TS) and interface components (TSX). Dev dependencies are for type checking only; build and tests run on plain Node 22.18+.",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "typecheck": "npm run typecheck:node && npm run typecheck:interfaces",
+    "cct:build": "node airtable/cct/tools/cct-build.ts",
+    "cct:test": "node --test airtable/cct/tests/cct-triage-rules.test.ts airtable/cct/tests/cct-triage-sync.test.ts airtable/cct/tests/cct-triage-compute.smoke.test.ts",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
+    "typecheck:interfaces": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@airtable/blocks": "interface-alpha",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.1.3",
+    "@types/react-dom": "^19.1.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "typescript": "^5.9.0"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "erasableSyntaxOnly": true,
+    "jsx": "preserve"
+  },
+  "include": [
+    "airtable/cct/*.ts",
+    "airtable/cct/automations/*.ts",
+    "airtable/cct/tools/*.ts",
+    "airtable/cct/tests/*.ts",
+    "airtable/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/dist"
+  ]
+}
