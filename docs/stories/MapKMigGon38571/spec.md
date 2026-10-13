@@ -7,8 +7,9 @@
 | Story points | 8 |
 | Owner | Andrés Serrón (replacing Carlos Olivares) |
 | QA | Gonzalo Lucas Ranieri |
-| Version | 1.1 · 2026-10-12 · triage output in its own table `command_center_triages` · replaces Carlos Olivares's 2026-09-17 docx (written against CC4, not this AC) |
-| Related docs | `acceptance-criteria-stack.md` (AC on the stack, IDs F/T/D/E/S) · `schema.md` (fields and IDs) · `implementation-plan.md` (steps, dates) |
+| Version | 2.0 · 2026-10-13 · **as built** (section 11 added; AC statuses and open items updated) · 1.1 was the 2026-10-12 design · replaces Carlos Olivares's 2026-09-17 docx (written against CC4, not this AC) |
+| Status | Implemented and verified end to end on the published page. Ready for QA once the commits are pushed and the hourly automation is enabled (see section 11.7) |
+| Related docs | `acceptance-criteria-stack.md` (AC on the stack, IDs F/T/D/E/S) · `schema.md` (fields and IDs) · `implementation-plan.md` (steps, dates) · `CHANGELOG.md` · `evidence.md` (AC by AC) · `qa-guide.md` (how QA tests it) · `MapKMigGon38571-work-queue-qa-report-v7.pdf` (screenshots) |
 
 ---
 
@@ -248,50 +249,50 @@ Idempotency: the script compares each computed value with the stored one and wri
 
 ## 8. Acceptance-criteria traceability
 
-IDs refer to `acceptance-criteria-stack.md`. Status as of 2026-10-12, before implementation.
+IDs refer to `acceptance-criteria-stack.md`. Status as of 2026-10-13, after implementation. Evidence for each criterion (tests, record IDs, screenshots) is in `evidence.md`.
 
-| AC | Where | Status |
+| AC | Where | Status (2026-10-13) |
 |---|---|---|
-| F1 Filter by domain/owner/source, every task has a lane | 4.1, 4.2, 5.1, 5.2 | Partial → planned |
+| F1 Filter by domain/owner/source, every task has a lane | 4.1, 4.2, 5.1, 5.2 | Met |
 | F2 Five lane values | `task_lanes.lane`, `lane_suggested` | Met |
-| F3 Combined filters across sources | 5.2 | Partial → planned |
-| F4 Unified triage data | 5.1 | Partial → planned |
-| F5 Configurable stale | 4.3, `cct_triage_configs` | Planned |
-| F6 Delegation eligibility | 4.4, `team_members` | Planned |
-| F7 Only matching tasks returned | 5.2 | Partial → planned |
-| F8 Stale badge + reason | 5.1, UI | Planned |
-| F9 Delegate prompt | 4.4, UI | Planned |
-| F10 Lane kept per user and identity | 5.1 (manual / rule) | Partial → planned |
-| T1 Ingestion into a common contract | Loom (38532) | Met |
-| T2 Field validation before use | 5.4, 6 | Planned |
-| T3 AI values separated | 5.1 (`ai`, provenance) | Planned |
+| F3 Combined filters across sources | 5.2 | Met |
+| F4 Unified triage data | 5.1 | Met |
+| F5 Configurable stale | 4.3, `cct_triage_configs` | Met (unit; live threshold change not run) |
+| F6 Delegation eligibility | 4.4, `team_members` | Met |
+| F7 Only matching tasks returned | 5.2 | Met |
+| F8 Stale badge + reason | 5.1, UI | Met |
+| F9 Delegate prompt | 4.4, UI | Met (suggestion path unit-tested; roster empty) |
+| F10 Lane kept per user and identity | 5.1 (manual / rule) | Met |
+| T1 Ingestion into a common contract | Loom (38532) | Met (38532) |
+| T2 Field validation before use | 5.4, 6 | Met |
+| T3 AI values separated | 5.1 (`ai`, provenance) | Met |
 | T4 AI never overwrites source | Loom; decisions only in `task_lanes` | Met |
-| T5 Stable contract | `schema.md`, 5.1, 5.2 | Planned |
-| T6 Filter validation | 5.2 | Planned |
-| T7 Logging | 6, `priority_events` | Partial → planned |
-| T8 Retries on transient failures | Loom (38532) | Met |
-| T9 Deterministic stale | 4.3, unit tests | Planned |
-| D1 Minimum row fields | 5.1 | Partial → planned |
-| D2 Traceability to source values | 4.1, 4.2 (`lane_rule`), 5.1 | Partial → planned |
-| D3 Missing values | 4.1, 4.3, 5.2 (`__none__`) | Planned |
-| D4 Airtable retrieval | Loom (38532) | Met |
+| T5 Stable contract | `schema.md`, 5.1, 5.2 | Met |
+| T6 Filter validation | 5.2 | Met (unit; not run from a URL) |
+| T7 Logging | 6, `priority_events` | Met |
+| T8 Retries on transient failures | Loom (38532) | Met (38532) |
+| T9 Deterministic stale | 4.3, unit tests | Met |
+| D1 Minimum row fields | 5.1 | Met |
+| D2 Traceability to source values | 4.1, 4.2 (`lane_rule`), 5.1 | Met |
+| D3 Missing values | 4.1, 4.3, 5.2 (`__none__`) | Met (live empty-activity case: QA guide 1) |
+| D4 Airtable retrieval | Loom (38532) | Met (38532) |
 | D5 Minimal AI context | No AI in this story | N/A |
-| D6 No duplicates across sources | 4.5 | Planned |
-| D7 Complete vs partial | 5.3 | Planned |
-| D8 Source-of-record consistency | 2, `schema.md` writers | Partial → planned |
-| E1 Missing filter attributes | 5.2 | Planned |
-| E2 Malformed records | 6 | Planned |
-| E3 Renamed/missing fields | 5.4, 6 | Planned |
+| D6 No duplicates across sources | 4.5 | Met |
+| D7 Complete vs partial | 5.3 | Met (Loom partial not simulated) |
+| D8 Source-of-record consistency | 2, `schema.md` writers | Met |
+| E1 Missing filter attributes | 5.2 | Met |
+| E2 Malformed records | 6 | Met |
+| E3 Renamed/missing fields | 5.4, 6 | Met |
 | E4 AI failure | Loom fallback | N/A |
-| E5 Stale without activity → unknown | 4.3 | Planned |
-| E6 Ambiguous duplicates | 4.5 | Planned |
-| E7 Invalid filter | 5.2 | Planned |
-| E8 Empty result | 5.2 | Not verified (Carlos's UI) → planned |
-| S1 Access control | 7 | Partial → planned |
+| E5 Stale without activity → unknown | 4.3 | Met (unit; live case: QA guide 1) |
+| E6 Ambiguous duplicates | 4.5 | Met |
+| E7 Invalid filter | 5.2 | Met (unit; not run from a URL) |
+| E8 Empty result | 5.2 | Met |
+| S1 Access control | 7 | Met |
 | S2 AI data minimization | No AI | N/A |
 | S3 Credentials | 7 | Met |
 | S4 Latency | 7 | Met |
-| S5 Avoid repeated reads/writes | 6 (idempotency), 7 | Planned |
+| S5 Avoid repeated reads/writes | 6 (idempotency), 7 | Met |
 | S6 Logs without task content | 7 | Met |
 
 ## 9. Test plan
@@ -337,13 +338,88 @@ IDs refer to `acceptance-criteria-stack.md`. Status as of 2026-10-12, before imp
 | R1 | Regression 38570 | Today: top 3, Needs-You, Power Hour unchanged |
 | R2 | Regression Work · Queue (5.5) | Detail panel, Done/Drop/Reschedule with "not synced to source", bulk retag/reassign/push, Delivery placeholder and On Fire → Today all still work |
 
-Evidence for SS ("delivery", one per criterion group) is prepared in `ss-drafts.md` and posted only after Andrés reviews each item.
+Results (2026-10-13): unit 64 of 64 pass (`npm run cct:test`); automation A1, A2 and A5 pass (dry run, live load, idempotent third run with 0 writes; A3 and A4 not run live); end to end 20 of 20 pass in the QA report v7 (E2E-1 to E2E-5, E2E-7 to E2E-9, R1, R2; E2E-6 only partly, see `evidence.md`). Evidence for SS ("delivery", one per criterion group) is prepared in `ss-drafts.md` and posted only after Andrés reviews each item.
 
 ## 10. Out of scope and open items
 
 - **D1–D3 (Max):** thresholds, default-lane rules, delegation roster. Defaults in `cct_triage_configs`; changes need no code.
+- **Roster (D3, Max):** `team_members` has no delegation roster yet, so "Delegate to someone else?" shows a free-text field and no suggested person. Names, emails and domains per person are pending.
+- **Test data in production (F4 of the QA report):** three `TEST - QA 38571 · …` tasks in `command_center_tasks` (source Manual, "SAFE TO DELETE") with their `task_lanes` rows, kept on purpose for regression until QA accepts the story. `priority_events` is append-only, so the test events stay.
 - **D4 (Max / Andrés):** resolved 2026-10-13 in `team_members`: Max Hanratty (`max@mapking.ai`) is the CEO row. 70 tasks have no owner, so `delegate_empty_owner_is_ceo` stays on. Max is to confirm that he also appears under other names or emails.
 - **D5 (Andrés):** the 18 test rows in `task_lanes` (Carlos / Andrés). Kept; they are per user and do not affect Max.
 - **Write-back of Done / Drop / Reschedule to the sources:** out of scope. Loom is read-only against Attio, Linear and Calendar by design; Airtable write-back semantics were never defined (see the 2026-09-17 docx).
 - **Work · Delivery tab (CC9):** a separate story.
 - **Two values set by Claude, pending Andrés's OK:** invalid-row threshold 10 %, triage freshness 2 hours.
+
+---
+
+## 11. As built (2026-10-13)
+
+### 11.1 Components delivered
+
+| Component | What | Where |
+|---|---|---|
+| Rules module | Pure functions: owner, lane, stale, delegate, identity, config and task validation | `airtable/cct/cct-triage-rules.ts` |
+| Sync planner | Pure 1:1 upsert plan: create, update, closed, orphan, duplicate guard | `airtable/cct/cct-triage-sync.ts` |
+| Automation script | `command_center_triages · compute · hourly` (id `wflFoOYmzWHZEcHPA`), input `dryRun` (anything but `no` is a dry run); batches of 50, writes only differences, heartbeat in `cct_triage_configs` | `airtable/cct/automations/cct-triage-compute.ts` (+ `cct-triage-compute.config.json`) |
+| Build | Inlines the pure modules into the pasteable script and the page | `airtable/cct/tools/cct-build.ts` → `airtable/cct/dist/` (git-ignored) |
+| Triage contract | Pure: triage rows, lane basis, filters and validation, completeness, required fields, identity groups | `airtable/cct/interfaces/cct-triage-contract.ts` |
+| Page | Work · Queue custom component | `airtable/cct/interfaces/WorkQueuePage.tsx` |
+| Tables | `cct_triage_configs`, `team_members`, `command_center_triages` (IDs in `schema.md`) | Airtable |
+| Tests | 64 tests: rules 13, sync 10, compute smoke 4 (runs the generated JS against a simulated base), contract 37 | `airtable/cct/tests/` |
+| Scripts | `npm run cct:build`, `npm run cct:test`, `npm run typecheck:dist` (`tsconfig.dist.json`) | `package.json` |
+
+### 11.2 Page behavior as built
+
+- **Data:** open tasks only (`lifecycle` = open), from every source, joined with `command_center_triages` by `normalized_task_id` and the signed-in user's `task_lanes` rows.
+- **Lanes:** tabs All / On Fire / This Week / Waiting On / Queued / Icebox with live counts. A task shows MANUAL LANE (the user's `task_lanes` row) or SUGGESTED (rule lane); with no triage row yet it falls back to Queued.
+- **Filters:** pills for domain, owner and source; OR inside a dimension, AND across; "No domain" and "Unassigned"; "Clear filters"; empty state "Nothing matches these filters".
+- **Badges:** AI category (provenance marker), DELEGABLE, DELEGATED · name, POSSIBLE DUPLICATE, AMBIGUOUS MATCH, "Stale · reason" (hidden when the state is `unknown` or `excluded`, and when the user already took an action), and action tags such as "done · local only", "dropped · local only" and "rescheduled · local only" for sources without write-back.
+- **Banner:** "This list may be incomplete or out of date" with one line per reason (Loom run not clean, source unavailable, triage pending or older than 2 hours).
+- **Detail panel:** tags, due date, raw owner, lane and basis, stale reason, Done / Drop / +7d, Move to…, Open in source, Delegate.
+- **Bulk:** select tasks, then Retag domain (select), Reassign owner (prompt) or Push to next week; per item, with partial-failure reporting.
+- **Required fields:** if any field the page uses is missing or hidden, the page lists each as `table.field (id)` and does not render the list.
+
+### 11.3 Events written by the page (`priority_events`, source `extension`, status `ok`)
+
+| Action | `event_type` | Summary | Message |
+|---|---|---|---|
+| Move to lane | `triage_action` | `move · <task> → <lane>` | `Lane <old> (<manual or rule>) → <new>` |
+| Delegate | `triage_action` | `delegate · <task> → <name>` | `Delegated to <name> (no suggestion)` |
+| Done / Drop | `triage_action` | `done · <task>` / `dropped · <task>` | `Action none → done; local only, not synced to source` |
+| +7d | `triage_action` | `rescheduled +7d · <task> → <date>` | `Action none → rescheduled; pushed to <date>; local only, not synced to source` |
+| Bulk retag / reassign / push | `triage_action` | `bulk <op> · <ok> of <total>` | `<op>: <n> written, <m> failed` |
+| Invalid filter | `triage_filter_invalid` | Dropped parameter and value | Reason |
+
+The automation writes `triage_compute` (run summary) and `triage_data_issue`.
+
+### 11.4 Airtable configuration the page needs
+
+1. **Data panel, every field the page reads.** The component reads six tables (`command_center_tasks`, `task_lanes`, `command_center_triages`, `loom_sync_runs`, `cct_triage_configs`, `priority_events`). Besides the fields it uses, the Airtable SDK requires the **primary field of each of the six tables** to be exposed: `command_center_tasks.normalized_task_id`, `task_lanes.rank_id`, `command_center_triages.normalized_task_id`, `loom_sync_runs.run_id`, `cct_triage_configs.name`, `priority_events.summary`. Without them the first write or the first render fails with "No field with ID … in table …". The required-field message of 5.4 lists anything missing.
+2. **User actions.** "Edit records inline" and "Add records inline" must be **ON**. For a custom component these toggles grant the SDK write permission: with them OFF, `hasPermissionToUpdateRecords()` / `hasPermissionToCreateRecords()` return false, actions fail with "No permission to update task_lanes" (bulk: "N of N items failed…") and no event is written. "Delete records inline" is not used by Work · Queue and may stay OFF; "Click into record details" OFF.
+3. **Automation.** Enable `command_center_triages · compute · hourly` with `dryRun = no` (verified: dry run 837 to create, 0 errors; live load 837 created; third run 0 writes).
+4. **Publish** the interface after any of the above (the designer preview does not change the published page).
+
+### 11.5 Differences from the 1.1 design
+
+| Topic | 1.1 | As built | Why |
+|---|---|---|---|
+| Done / Drop / +7d events | Not specified (only move, delegate, bulk) | Each writes a `triage_action` event (11.3) | QA run 1 found that Carlos's actions were not logged; the AC asks for logging |
+| Required fields | "Same pattern as Today" | Message lists `table.field (id)` and hides the list | Verified by hiding fields in the designer (QA report test 20) |
+| Primary fields and User actions | Not known | Requirements in 11.4 | Found during testing: SDK constraints, not in the AC |
+| Stale `excluded` | Fourth state | Unchanged; the badge is hidden for it | — |
+| Completeness freshness | Heartbeat | `cct_triage_configs.last_run_at` / `last_run_status`; older than 2 hours counts as not computed | Because `computed_at` only changes when values change (6) |
+
+### 11.6 Known limits
+
+- No write-back of Done / Drop / Reschedule to Attio, Linear or Calendar (Loom is read-only against them; Airtable write-back semantics were never defined). `synced_to_source` is true only for source Airtable, and the page says "local only" otherwise.
+- Delegation suggests no person until the roster in `team_members` is filled in (D3).
+- Work · Delivery is a placeholder (CC9).
+- UI tests are screenshot-based: the component runs in a cross-origin iframe, so DOM tools cannot read it.
+
+### 11.7 Before sending to QA
+
+1. Push the commits (automation and config; contract and tests; page, build and `package.json`; docs).
+2. Enable the automation with `dryRun = no`.
+3. Keep the User actions as in 11.4 (Edit and Add ON) and the interface published.
+4. Review `ss-drafts.md` with the developer before anything is written in Singular Studio or `send-to-qa` is called.
