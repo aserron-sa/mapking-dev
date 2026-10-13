@@ -191,7 +191,7 @@ On load, the page checks that every field it uses exists and is visible to the e
 
 ### 5.5 Existing Work · Queue behavior to keep
 
-Built by Carlos Olivares (2026-09-17, docx "Work · Queue (Triage por Lanes)", same file as the SS evidence) and confirmed by him manually. Not part of this AC, but it must keep working (regression R2):
+Built by Carlos Olivares (2026-09-17, docx "Work · Queue (Triage por Lanes)", same file as the SS evidence) and confirmed by him manually. Source recovered 2026-10-12: `airtable/cct/interface/WorkQueuePage.tsx` (Airtable code-editor project: `frontend/index.tsx` + `style.css`; template files in `extension-template/`). Not part of this AC, but it must keep working (regression R2):
 
 - Queue / Delivery toggle (Delivery = "Coming soon — CC9" placeholder).
 - Lane tabs with live counts; single-select filter pills with "Clear filters".
@@ -210,6 +210,10 @@ Changes this story makes to that behavior:
 | Owner as written by the source | `owner_canonical` (4.1); the raw owner stays visible in the detail panel |
 | Bulk actions and Delegate not logged | Logged as `triage_action` |
 | Missing fields → "Nothing matches these filters" with every count at 0 (the bug Carlos fixed by exposing fields in the Data panel) | Required-field check names the missing field (5.4) |
+| Shows every row with `source_status` = ok, **including closed tasks** (`lifecycle` closed / not_returned: 691 rows on 2026-10-12 vs 146 open) | Only open tasks (`lifecycle` = open) |
+| Hides tasks whose source is `stale` or `unavailable` | Shows them, with the partial banner (5.3) |
+| Fields looked up by name (`getFieldIfExists('title')`), so a rename breaks the page silently | Field IDs, like Today (5.4) |
+| Writes skipped silently without permission | Error shown and `triage_action` logged with `dependency_failed` |
 
 ## 6. Error handling
 

@@ -126,5 +126,5 @@ The choices were registered by creating one setup event per type (2026-10-12, su
 
 ## Manual follow-up in Airtable (optional, Andrés)
 
-- `command_center_triages.task` and `command_center_tasks.triage`: turn off "Allow linking to multiple records" (the API cannot set it). The script enforces one link either way.
+- ~~`command_center_triages.task` and `command_center_tasks.triage`: turn off "Allow linking to multiple records"~~ Done by Andrés 2026-10-12 (verified: `prefersSingleRecordLink` = true on both). The script still enforces one link.
 - Expose the new tables and fields in the Work · Queue page's Data panel when step 7b is published.

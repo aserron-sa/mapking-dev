@@ -276,7 +276,7 @@ Leyenda de responsable: **C** = Claude, **A** = Andrés (paso manual en Airtable
 | 3 | `triage-rules.js` + tests | Pendiente | | |
 | 4 | `triage-compute.js` | Pendiente | | |
 | 4b | Automatización en Airtable | Pendiente (Andrés) | | |
-| 5 | Recuperar `WorkQueuePage.tsx` | Pendiente (Andrés) | | Riesgo de calendario si no se puede |
+| 5 | Recuperar `WorkQueuePage.tsx` | Hecho | 2026-10-12 | Export de Andrés (source_export.zip). Guardado tal cual en `airtable/cct/interface/WorkQueuePage.tsx` (+ `extension-template/` con package.json y style.css). Hallazgos: muestra tareas cerradas (no filtra `lifecycle`), oculta tareas de fuentes no `ok`, busca campos por nombre |
 | 6 | `triageContract.ts` + tests | Pendiente | | |
 | 7 | UI Work · Queue | Pendiente | | |
 | 7b | Publicar extensión | Pendiente (Andrés) | | |
