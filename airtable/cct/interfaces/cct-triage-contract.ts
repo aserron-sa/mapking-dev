@@ -11,7 +11,7 @@
  *   applyFilters()      OR inside a dimension, AND across dimensions
  *   completeness()      complete / partial and the reasons for the banner (spec 5.3)
  *   checkRequiredFields()  names every missing field (spec 5.4)
- *   laneCounts(), identityGroups(), compareRows(), showStaleBadge()  helpers for the page
+ *   laneCounts(), identityGroups(), groupAdjacent(), compareRows(), showStaleBadge()  helpers for the page
  *
  * Triage values (owner, stale, delegate, lane suggestion, identity) are NOT recomputed here:
  * they come from command_center_triages, written by cct-triage-compute.ts. This module only
@@ -291,6 +291,31 @@ export function identityGroups(rows: TriageRow[]): Map<string, TriageRow[]> {
   return groups;
 }
 
+/**
+ * Keep the given order, but pull the rows that share an identity key next to each other
+ * (right after the first member that appears). Only members present in `rows` move, so a
+ * filter that hides one half of a pair does not bring it back. Rows are never merged or dropped.
+ */
+export function groupAdjacent(rows: TriageRow[]): TriageRow[] {
+  const byKey = new Map<string, TriageRow[]>();
+  for (const r of rows) {
+    if (r.identity.status === 'unique' || !r.identity.key) continue;
+    if (!byKey.has(r.identity.key)) byKey.set(r.identity.key, []);
+    byKey.get(r.identity.key)!.push(r);
+  }
+  const out: TriageRow[] = [];
+  const placed = new Set<string>();
+  for (const r of rows) {
+    if (placed.has(r.recordId)) continue;
+    const group = r.identity.status !== 'unique' && r.identity.key ? byKey.get(r.identity.key)! : [r];
+    for (const g of group) {
+      placed.add(g.recordId);
+      out.push(g);
+    }
+  }
+  return out;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Filters (spec 5.2)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -397,8 +422,10 @@ export interface CompletenessInput {
   /** Open tasks as read from command_center_tasks (before the user's filters). */
   tasks: TaskRecord[];
   triages: TriageRecord[];
-  loomRuns: LoomRun[];
-  heartbeat: Heartbeat;
+  /** null = the page cannot read loom_sync_runs (table or fields not exposed). */
+  loomRuns: LoomRun[] | null;
+  /** null = the page cannot read the cct_triage_configs heartbeat. */
+  heartbeat: Heartbeat | null;
   /** The current instant (injected so the function stays pure). */
   now: Date;
   /** Heartbeat older than this is "triage not computed" (spec: 2 hours). */
@@ -412,11 +439,12 @@ export function completeness(input: CompletenessInput): Completeness {
   const open = input.tasks.filter((t) => t.lifecycle === 'open' && !!t.taskId);
 
   // 1. Last finished Loom run not clean. running / rejected_busy / abandoned are skipped.
-  const finished = input.loomRuns
+  const finished = (input.loomRuns ?? [])
     .filter((r) => r.status !== null && FINISHED_LOOM_STATUSES.includes(r.status) && !!r.startedAt)
     .sort((a, b) => Date.parse(b.startedAt!) - Date.parse(a.startedAt!));
   const last = finished[0];
-  if (last && last.status !== 'success') reasons.push(`Last Loom sync was ${last.status}`);
+  if (input.loomRuns === null) reasons.push('Loom sync status cannot be read');
+  else if (last && last.status !== 'success') reasons.push(`Last Loom sync was ${last.status}`);
 
   // 2. Sources unavailable, named by source.
   const unavailable = new Map<string, number>();
@@ -432,14 +460,18 @@ export function completeness(input: CompletenessInput): Completeness {
   const missing = open.filter((t) => !liveTriage.has(t.recordId)).length;
   if (missing > 0) reasons.push(`${missing} open ${missing === 1 ? 'task has' : 'tasks have'} no triage yet`);
   const maxAgeMs = (input.maxTriageAgeHours ?? 2) * 3_600_000;
-  const at = input.heartbeat.lastRunAt ? Date.parse(input.heartbeat.lastRunAt) : NaN;
-  if (Number.isNaN(at)) {
-    reasons.push('Triage has not run yet');
-  } else if (input.now.getTime() - at > maxAgeMs) {
-    reasons.push(`Triage last ran more than ${input.maxTriageAgeHours ?? 2} hours ago`);
-  }
-  if (input.heartbeat.lastRunStatus !== null && input.heartbeat.lastRunStatus !== 'ok') {
-    reasons.push(`Last triage run was ${input.heartbeat.lastRunStatus}`);
+  if (input.heartbeat === null) {
+    reasons.push('Triage freshness cannot be read');
+  } else {
+    const at = input.heartbeat.lastRunAt ? Date.parse(input.heartbeat.lastRunAt) : NaN;
+    if (Number.isNaN(at)) {
+      reasons.push('Triage has not run yet');
+    } else if (input.now.getTime() - at > maxAgeMs) {
+      reasons.push(`Triage last ran more than ${input.maxTriageAgeHours ?? 2} hours ago`);
+    }
+    if (input.heartbeat.lastRunStatus !== null && input.heartbeat.lastRunStatus !== 'ok') {
+      reasons.push(`Last triage run was ${input.heartbeat.lastRunStatus}`);
+    }
   }
 
   return { status: reasons.length ? 'partial' : 'complete', reasons };

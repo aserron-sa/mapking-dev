@@ -11,6 +11,7 @@ import {
   checkRequiredFields,
   compareRows,
   completeness,
+  groupAdjacent,
   hasActiveFilters,
   identityGroups,
   laneCounts,
@@ -412,4 +413,32 @@ test('checkRequiredFields names every missing field with its table', () => {
   });
   assert.deepEqual(msgs, ['command_center_tasks.due_date (fld2) is not available']);
   assert.deepEqual(checkRequiredFields({ tables: [] }), []);
+});
+
+test('completeness: unreadable Loom runs or heartbeat are reported, not assumed', () => {
+  assert.deepEqual(completeness(completeInput({ loomRuns: null })).reasons, ['Loom sync status cannot be read']);
+  assert.deepEqual(completeness(completeInput({ heartbeat: null })).reasons, ['Triage freshness cannot be read']);
+});
+
+// ── groupAdjacent ───────────────────────────────────────────────────────────
+
+test('groupAdjacent pulls members of an identity group together and keeps the rest in order', () => {
+  const rows = rowsOf(
+    [
+      task({ recordId: 'r1', taskId: 'a:1' }),
+      task({ recordId: 'r2', taskId: 'a:2' }),
+      task({ recordId: 'r3', taskId: 'a:3' }),
+      task({ recordId: 'r4', taskId: 'a:4' }),
+    ],
+    [
+      triage({ recordId: 'x1', taskRecordId: 'r1', identityKey: 'k', identityStatus: 'duplicate_candidate' }),
+      triage({ recordId: 'x2', taskRecordId: 'r2' }),
+      triage({ recordId: 'x3', taskRecordId: 'r3' }),
+      triage({ recordId: 'x4', taskRecordId: 'r4', identityKey: 'k', identityStatus: 'duplicate_candidate' }),
+    ],
+  );
+  assert.deepEqual(groupAdjacent(rows).map((r) => r.taskId), ['a:1', 'a:4', 'a:2', 'a:3']);
+  // a filtered list that only contains one member does not bring the other back
+  assert.deepEqual(groupAdjacent(rows.filter((r) => r.taskId !== 'a:4')).map((r) => r.taskId), ['a:1', 'a:2', 'a:3']);
+  assert.deepEqual(groupAdjacent([]), []);
 });
