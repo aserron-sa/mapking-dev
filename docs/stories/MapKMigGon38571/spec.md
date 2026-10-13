@@ -54,7 +54,7 @@ Work · Queue extension
 | `cct-triage-compute.ts` | Hourly automation: read, evaluate, upsert triage rows, log | `airtable/cct/automations/` (+ built copy to paste) |
 | `command_center_triages` | Triage output, one row per task (1:1), written only by the script | Airtable, new |
 | `cct-triage-contract.ts` | Pure triage-row and filter logic for the page | `airtable/cct/interfaces/` |
-| `cct-work-queue.tsx` | The Work · Queue page | `airtable/cct/interfaces/` |
+| `WorkQueuePage.tsx` | The Work · Queue page | `airtable/cct/interfaces/` |
 | `task_lanes` | Per-user manual decisions; shared with 38570 (Today, On Fire top 3) | Airtable, unchanged |
 | `priority_events` | Event log | Airtable |
 
@@ -191,7 +191,7 @@ On load, the page checks that every field it uses exists and is visible to the e
 
 ### 5.5 Existing Work · Queue behavior to keep
 
-Built by Carlos Olivares (2026-09-17, docx "Work · Queue (Triage por Lanes)", same file as the SS evidence) and confirmed by him manually. Source recovered 2026-10-12: `airtable/cct/interfaces/cct-work-queue.tsx` (Airtable code-editor project: `frontend/index.tsx` + `style.css`; template files in `extension-template/`). Not part of this AC, but it must keep working (regression R2):
+Built by Carlos Olivares (2026-09-17, docx "Work · Queue (Triage por Lanes)", same file as the SS evidence) and confirmed by him manually. Source recovered 2026-10-12: `airtable/cct/interfaces/WorkQueuePage.tsx` (Airtable code-editor project: `frontend/index.tsx` + `style.css`; template files in `extension-template/`). Not part of this AC, but it must keep working (regression R2):
 
 - Queue / Delivery toggle (Delivery = "Coming soon — CC9" placeholder).
 - Lane tabs with live counts; single-select filter pills with "Clear filters".

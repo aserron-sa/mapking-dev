@@ -192,9 +192,9 @@ Leyenda de responsable: **C** = Claude, **A** = Andrés (paso manual en Airtable
 | 3 | `airtable/cct/cct-triage-rules.ts` (puro) + `airtable/cct/tests/cct-triage-rules.test.ts` (`node --test`): lanes, stale, delegate, owner, identidad, bordes (nulls, fechas inválidas, config faltante) | C | Lib + tests en verde | 4 h |
 | 4 | `airtable/cct/automations/cct-triage-compute.ts` (inlinea la lib con `airtable/cct/tools/cct-build.ts`), modo `dryRun`, upsert 1:1 en `command_center_triages` (crear, actualizar, cerradas, huérfanas, control de duplicados), escritura solo de cambios en lotes de 50, log a `priority_events` | C | Script + `dist/` para pegar | 2,5 h |
 | 4b | Crear la automatización "command_center_triages · compute · hourly", pegar el script, correr con `dryRun = yes`, revisar conteos, después `no` y encenderla | A (≈20 min) | Automatización activa | 1 h |
-| 5 | Recuperar `cct-work-queue.tsx` de la extensión de Airtable al repo (copiar desde el editor de la extensión) | A (≈15 min) | Archivo en `airtable/cct/interfaces/` | 0,5 h |
+| 5 | Recuperar `WorkQueuePage.tsx` de la extensión de Airtable al repo (copiar desde el editor de la extensión) | A (≈15 min) | Archivo en `airtable/cct/interfaces/` | 0,5 h |
 | 6 | `airtable/cct/interfaces/cct-triage-contract.ts` (puro): arma la fila de triage, lane efectiva + basis, filtros combinados + validación, procedencia, completitud. Tests con `node --test` | C | Módulo + tests | 3 h |
-| 7 | Integración en Work · Queue: tabs por lane efectiva con badge manual/rule, stale + motivo, prompt "Delegate to X?" (escribe `delegated_to` + `triage_action`), marcas de procedencia, banner completo/parcial, estado vacío, aviso de filtro inválido | C | `cct-work-queue.tsx` actualizado | 5 h |
+| 7 | Integración en Work · Queue: tabs por lane efectiva con badge manual/rule, stale + motivo, prompt "Delegate to X?" (escribe `delegated_to` + `triage_action`), marcas de procedencia, banner completo/parcial, estado vacío, aviso de filtro inválido | C | `WorkQueuePage.tsx` actualizado | 5 h |
 | 7b | Publicar la extensión y exponer los campos nuevos en el panel Data de la página (fue la causa del bug de "0 tareas" de Carlos) | A (≈20 min) | Extensión publicada | 0,5 h |
 | 8 | Pruebas E2E en la interface según el plan del spec. Evidencia "delivery" por criterio preparada en `ss-drafts.md`; Andrés la revisa item por item y la publica | C + A | Evidencias listas para SS | 3,5 h |
 | 9 | Cierre: trazabilidad, comentario final y reemplazo del docx viejo preparados en `ss-drafts.md`, backup en Drive. `send-to-qa` solo con OK de Andrés | C | Story lista para QA | 1,5 h |
@@ -244,7 +244,7 @@ Leyenda de responsable: **C** = Claude, **A** = Andrés (paso manual en Airtable
 | Riesgo | Mitigación |
 |---|---|
 | Max no responde antes del 14 | Defaults en config; cambiarlos no requiere código |
-| `cct-work-queue.tsx` no se puede recuperar | Reescribir la página sobre el contrato nuevo (+4 h); se decide el 13 |
+| `WorkQueuePage.tsx` no se puede recuperar | Reescribir la página sobre el contrato nuevo (+4 h); se decide el 13 |
 | Campos nuevos no visibles para la extensión | Paso 7b explícito + chequeo de campos requeridos en la página (como Today) |
 | Conflicto con automatizaciones de 38570 | `task_lanes` sin cambios; prueba R1 |
 | Pasos manuales en Airtable (pegar scripts, publicar) | Agrupados en 3 bloques cortos (≈1 h total) con instrucciones exactas |
@@ -276,7 +276,7 @@ Leyenda de responsable: **C** = Claude, **A** = Andrés (paso manual en Airtable
 | 3 | Reglas + tests | Hecho | 2026-10-12 | `airtable/cct/cct-triage-rules.ts` + `airtable/cct/tests/cct-triage-rules.test.ts` (13 tests en verde, `node --test`). Convención: TS/TSX, prefijo `cct-`, carpetas `airtable/cct/{automations,interfaces,tests}` |
 | 4 | `cct-triage-compute.ts` | Pendiente | | |
 | 4b | Automatización en Airtable | Pendiente (Andrés) | | |
-| 5 | Recuperar `cct-work-queue.tsx` | Hecho | 2026-10-12 | Export de Andrés (source_export.zip). Guardado tal cual en `airtable/cct/interfaces/cct-work-queue.tsx` (+ `extension-template/` con package.json y style.css). Hallazgos: muestra tareas cerradas (no filtra `lifecycle`), oculta tareas de fuentes no `ok`, busca campos por nombre |
+| 5 | Recuperar `WorkQueuePage.tsx` | Hecho | 2026-10-12 | Export de Andrés (source_export.zip). Guardado tal cual en `airtable/cct/interfaces/WorkQueuePage.tsx` (+ `extension-template/` con package.json y style.css). Hallazgos: muestra tareas cerradas (no filtra `lifecycle`), oculta tareas de fuentes no `ok`, busca campos por nombre |
 | 6 | `cct-triage-contract.ts` + tests | Pendiente | | |
 | 7 | UI Work · Queue | Pendiente | | |
 | 7b | Publicar extensión | Pendiente (Andrés) | | |

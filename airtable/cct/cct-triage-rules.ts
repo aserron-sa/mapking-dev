@@ -4,7 +4,7 @@
  * Pure triage rules for command_center_tasks. No Airtable calls, no I/O, no AI:
  * same input → same output. Used by:
  *   - airtable/cct/automations/cct-triage-compute.ts (hourly automation; inlined by the build)
- *   - airtable/cct/interfaces/cct-work-queue.tsx       (custom interface component; inlined by the build)
+ *   - airtable/cct/interfaces/WorkQueuePage.tsx        (custom interface component; inlined by the build)
  *   - airtable/cct/tests/cct-triage-rules.test.ts      (node --test)
  *
  * Rules are specified in docs/stories/MapKMigGon38571/spec.md §4. Keep both in sync.

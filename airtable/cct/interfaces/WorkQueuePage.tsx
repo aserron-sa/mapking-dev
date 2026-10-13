@@ -1,3 +1,30 @@
+/**
+ * Work · Queue — triage list by lanes (MapKMigGon38571)
+ *
+ * Airtable Interface custom component for Interface 2 → Work · Queue
+ * (page pag03n2LkOElxV9qW). In Airtable's code editor this file is `frontend/index.tsx`;
+ * `style.css` and `package.json` are in ./extension-template/.
+ *
+ * Status: BASELINE. Original by Carlos Olivares (2026-09-17), recovered from Airtable on
+ * 2026-10-12 by Andrés Serrón (source export). The code below is unchanged; only this
+ * header was added. It is rewritten in steps 6–7 of the plan.
+ *
+ * What it does today (see docs/stories/MapKMigGon38571/work-queue.md):
+ *   - Lane tabs (All / On Fire / This Week / Waiting On / Queued / Icebox), filter pills
+ *     (domain, owner, source), detail panel, Done / Drop / Reschedule, bulk retag /
+ *     reassign / push to next week, Delivery placeholder (CC9).
+ *   - Writes only to task_lanes (per user), never to command_center_tasks.
+ *
+ * Known issues found on 2026-10-12 (fixed by this story, spec §5.5):
+ *   - Lists every row with source_status = ok, including CLOSED tasks (lifecycle is not
+ *     filtered): 691 closed rows vs 146 open.
+ *   - Hides tasks whose source is stale or unavailable, without telling the user.
+ *   - Looks fields up by name (getFieldIfExists('title')): a rename breaks it silently.
+ *   - Stale rule is hard-coded (past due + 2 days unchanged + no action).
+ *   - Writes without permission are skipped silently.
+ *
+ * Docs: docs/stories/MapKMigGon38571/{spec,schema,implementation-plan}.md
+ */
 import './style.css';
 import React, { useState, useMemo } from 'react';
 import {
