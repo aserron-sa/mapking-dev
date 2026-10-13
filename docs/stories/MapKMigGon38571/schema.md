@@ -141,4 +141,4 @@ The choices were registered by creating one setup event per type (2026-10-12, su
 ## Manual follow-up in Airtable (optional, Andrés)
 
 - ~~`command_center_triages.task` and `command_center_tasks.triage`: turn off "Allow linking to multiple records"~~ Done by Andrés 2026-10-12 (verified: `prefersSingleRecordLink` = true on both). The script still enforces one link.
-- Expose the new tables and fields in the Work · Queue page's Data panel when step 7b is published.
+- Step 7b: the Work · Queue page reads six tables, set in its properties panel (all default to the right table by ID): `command_center_tasks`, `task_lanes`, `command_center_triages`, `loom_sync_runs`, `cct_triage_configs`, `priority_events`. Every field listed in `airtable/cct/interfaces/WorkQueuePage.tsx` (constant `IDS`) must be visible in the page's Data panel. A missing field in tasks, task_lanes or triages is named on the page and the list is not shown; a missing field in `loom_sync_runs` or `cct_triage_configs` shows up in the "partial" banner; a missing field in `priority_events` skips the event log silently.
