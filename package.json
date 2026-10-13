@@ -11,7 +11,8 @@
     "cct:build": "node airtable/cct/tools/cct-build.ts",
     "cct:test": "node --test airtable/cct/tests/cct-triage-rules.test.ts airtable/cct/tests/cct-triage-sync.test.ts airtable/cct/tests/cct-triage-compute.smoke.test.ts airtable/cct/tests/cct-triage-contract.test.ts",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
-    "typecheck:interfaces": "tsc --noEmit -p tsconfig.json"
+    "typecheck:interfaces": "tsc --noEmit -p tsconfig.json",
+    "typecheck:dist": "npm run cct:build && tsc --noEmit -p tsconfig.dist.json"
   },
   "devDependencies": {
     "@airtable/blocks": "interface-alpha",
