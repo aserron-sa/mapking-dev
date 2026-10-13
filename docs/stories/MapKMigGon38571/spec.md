@@ -7,7 +7,7 @@
 | Story points | 8 |
 | Owner | Andrés Serrón (replacing Carlos Olivares) |
 | QA | Gonzalo Lucas Ranieri |
-| Version | 1.1 · 2026-10-12 · triage output in its own table `command_center_triage` · replaces Carlos Olivares's 2026-09-17 docx (written against CC4, not this AC) |
+| Version | 1.1 · 2026-10-12 · triage output in its own table `command_center_triages` · replaces Carlos Olivares's 2026-09-17 docx (written against CC4, not this AC) |
 | Related docs | `acceptance-criteria-stack.md` (AC on the stack, IDs F/T/D/E/S) · `schema.md` (fields and IDs) · `implementation-plan.md` (steps, dates) |
 
 ---
@@ -30,18 +30,18 @@ In the Work · Queue interface, every open task from every source:
 ```
 Loom (daily 07:47 CT + Slack)  ──>  command_center_tasks   (Loom fields, unchanged)
                                           │
-triage_config + team_members ──┐          │
+triage_configs + team_members ──┐          │
                                ▼          ▼
             triage-compute.js  (Airtable automation, hourly)
               · rules: airtable/cct/lib/triage-rules.js (pure, unit-tested, inlined at build)
-              · writes only command_center_triage (one row per task, 1:1)
+              · writes only command_center_triages (one row per task, 1:1)
               · logs to priority_events
                                           │
                                           ▼
 Work · Queue extension
   · triageContract.ts (pure, unit-tested): builds triage rows, applies and validates filters,
     provenance, completeness
-  · reads command_center_tasks + command_center_triage (joined by normalized_task_id)
+  · reads command_center_tasks + command_center_triages (joined by normalized_task_id)
     + the signed-in user's task_lanes + loom_sync_runs
   · writes only task_lanes (decisions) and priority_events
 ```
@@ -49,16 +49,16 @@ Work · Queue extension
 | Component | Role | Location |
 |---|---|---|
 | Loom | Ingestion, normalization, AI enrichment (`category`, `tags`, `schedulable`) | Hyperagent · 38532 |
-| `triage_config`, `team_members` | Configurable rules and roster | Airtable |
+| `triage_configs`, `team_members` | Configurable rules and roster | Airtable |
 | `triage-rules.js` | Pure rule functions: lane, stale, delegate, owner, identity | `airtable/cct/lib/` |
 | `triage-compute.js` | Hourly automation: read, evaluate, upsert triage rows, log | `airtable/cct/automations/` (+ built copy to paste) |
-| `command_center_triage` | Triage output, one row per task (1:1), written only by the script | Airtable, new |
+| `command_center_triages` | Triage output, one row per task (1:1), written only by the script | Airtable, new |
 | `triageContract.ts` | Pure triage-row and filter logic for the page | `airtable/cct/interface/` |
 | `WorkQueuePage.tsx` | The Work · Queue page | `airtable/cct/interface/` |
 | `task_lanes` | Per-user manual decisions; shared with 38570 (Today, On Fire top 3) | Airtable, unchanged |
 | `priority_events` | Event log | Airtable |
 
-Why a scheduled script and not formulas: an Airtable formula cannot read another table without a link on every row, so formulas cannot read `triage_config`. The hourly-script pattern is already in production for 38570 (`needs-you-waiting-since.js`).
+Why a scheduled script and not formulas: an Airtable formula cannot read another table without a link on every row, so formulas cannot read `triage_configs`. The hourly-script pattern is already in production for 38570 (`needs-you-waiting-since.js`).
 
 Why `lane_suggested` instead of creating `task_lanes` rows: rule lanes are recomputed every hour and must not trigger 38570's `task_lanes` integrity automations or create hundreds of rows per user. `task_lanes` keeps only what a person decided.
 
@@ -66,8 +66,8 @@ Why `lane_suggested` instead of creating `task_lanes` rows: rule lanes are recom
 
 See `schema.md` for every field, type, default and ID. Summary:
 
-- **New tables:** `triage_config` (one active row of thresholds) and `team_members` (canonical names, aliases, CEO flag, delegation roster by domain).
-- **New table `command_center_triage`** (1:1 with `command_center_tasks`): `normalized_task_id`, `task` (link), `row_status`, `owner_canonical`, `owner_match`, `stale_state`, `stale_reason`, `delegate_eligible`, `delegate_reason`, `delegate_suggested_to`, `lane_suggested`, `lane_rule`, `identity_key`, `identity_status`, `computed_at`. Kept separate so `command_center_tasks` (about 35 fields, three owners) gets only the inverse link field `triage`.
+- **New tables:** `triage_configs` (one active row of thresholds) and `team_members` (canonical names, aliases, CEO flag, delegation roster by domain).
+- **New table `command_center_triages`** (1:1 with `command_center_tasks`): `normalized_task_id`, `task` (link), `row_status`, `owner_canonical`, `owner_match`, `stale_state`, `stale_reason`, `delegate_eligible`, `delegate_reason`, `delegate_suggested_to`, `lane_suggested`, `lane_rule`, `identity_key`, `identity_status`, `computed_at`. Kept separate so `command_center_tasks` (about 35 fields, three owners) gets only the inverse link field `triage`.
 - **Join:** script and page match the two tables by `normalized_task_id`; the link field gives navigation and optional lookups in Airtable.
 - **New `priority_events` types:** `triage_compute`, `triage_data_issue`, `triage_filter_invalid`, `triage_action`.
 - **`task_lanes`:** unchanged.
@@ -138,7 +138,7 @@ type Provenance = 'source' | 'ai' | 'override' | 'rule' | 'manual';
 
 type TriageRow = {
   recordId: string;                 // command_center_tasks record
-  triageRecordId: string | null;    // command_center_triage row (null until the first run after Loom adds the task)
+  triageRecordId: string | null;    // command_center_triages row (null until the first run after Loom adds the task)
   taskId: string;                   // normalized_task_id
   title: string;
   source: string;                   // Attio | Linear | Airtable | Google Calendar | Manual
@@ -181,7 +181,7 @@ type Filters = { domain?: string[]; owner?: string[]; source?: string[]; lane?: 
 |---|---|
 | Last Loom run not clean | Latest `loom_sync_runs` row with status `success`, `partial` or `failure` is `partial` or `failure` (`running`, `rejected_busy` and `abandoned` are skipped) |
 | Source unavailable | Any open row with `source_status` = `unavailable` (named by source) |
-| Triage not computed | Any open task without a `command_center_triage` row, or the newest `computed_at` older than 2 hours |
+| Triage not computed | Any open task without a `command_center_triages` row, or the newest `computed_at` older than 2 hours |
 
 The page shows a banner listing every reason. Data still renders.
 
@@ -204,7 +204,7 @@ Changes this story makes to that behavior:
 
 | Carlos's version | This story |
 |---|---|
-| Stale = past due + `last_updated_at` unchanged ≥ 2 days + no action, hard-coded in the page | `stale_state` from `triage-compute.js` and `triage_config` (4.3). The page hides the stale badge and the forced Done/Drop/Reschedule buttons when the user already took an action (`action_status` ≠ none), as Carlos's rule did |
+| Stale = past due + `last_updated_at` unchanged ≥ 2 days + no action, hard-coded in the page | `stale_state` from `triage-compute.js` and `triage_configs` (4.3). The page hides the stale badge and the forced Done/Drop/Reschedule buttons when the user already took an action (`action_status` ≠ none), as Carlos's rule did |
 | Filters: one value per dimension | Same pills, plus combined values, lane filter, "No domain" / "Unassigned" and validation (5.2) |
 | Tasks without a `task_lanes` row appear only in "All" | Every task has a lane: manual or rule (5.1) |
 | Owner as written by the source | `owner_canonical` (4.1); the raw owner stays visible in the detail panel |
@@ -215,12 +215,12 @@ Changes this story makes to that behavior:
 
 | Case | Behavior | Log |
 |---|---|---|
-| No active `triage_config` row, or more than one | Script stops before writing | `triage_data_issue`, `validation_failed` |
+| No active `triage_configs` row, or more than one | Script stops before writing | `triage_data_issue`, `validation_failed` |
 | A required field missing or renamed (script) | Script stops before writing; message names the field ID | `triage_data_issue`, `validation_failed` |
 | A required field missing or hidden (page) | Page shows the field list instead of the triage list | Shown in the page |
 | Invalid row (no `normalized_task_id`, no `source`, unparsable date) | Row skipped; others processed | `triage_data_issue` with record IDs |
 | Invalid rows > `invalid_rows_max_pct` of open rows | Run writes nothing | `triage_data_issue`, `validation_failed` |
-| Two `command_center_triage` rows for one task | Keep the oldest, update only that one; nothing deleted | `triage_data_issue` with both record IDs |
+| Two `command_center_triages` rows for one task | Keep the oldest, update only that one; nothing deleted | `triage_data_issue` with both record IDs |
 | Triage row whose task no longer exists | `row_status` = `orphan`; kept | Counted in `triage_compute` |
 | New task without a triage row yet | Page shows it in `queued` (basis rule, `fallback`) and the partial banner says triage is pending | — |
 | Owner without match | Raw owner kept, `owner_match` = `unmatched` | One `triage_data_issue` per run listing owners |
@@ -251,7 +251,7 @@ IDs refer to `acceptance-criteria-stack.md`. Status as of 2026-10-12, before imp
 | F2 Five lane values | `task_lanes.lane`, `lane_suggested` | Met |
 | F3 Combined filters across sources | 5.2 | Partial → planned |
 | F4 Unified triage data | 5.1 | Partial → planned |
-| F5 Configurable stale | 4.3, `triage_config` | Planned |
+| F5 Configurable stale | 4.3, `triage_configs` | Planned |
 | F6 Delegation eligibility | 4.4, `team_members` | Planned |
 | F7 Only matching tasks returned | 5.2 | Partial → planned |
 | F8 Stale badge + reason | 5.1, UI | Planned |
@@ -314,7 +314,7 @@ IDs refer to `acceptance-criteria-stack.md`. Status as of 2026-10-12, before imp
 | A2 | Run live twice | Second run: 0 changes |
 | A3 | Change `stale_inactive_days` 7 → 3, run | Stale count rises; reasons show the new limit; set back to 7 |
 | A4 | Deactivate the config row, run | Run stops; `triage_data_issue`; no writes; reactivate |
-| A5 | First live run | One `command_center_triage` row per task in `command_center_tasks`; second run creates 0 rows |
+| A5 | First live run | One `command_center_triages` row per task in `command_center_tasks`; second run creates 0 rows |
 
 ### End-to-end (Work · Queue)
 
@@ -336,7 +336,7 @@ Evidence for SS ("delivery", one per criterion group) is prepared in `ss-drafts.
 
 ## 10. Out of scope and open items
 
-- **D1–D3 (Max):** thresholds, default-lane rules, delegation roster. Defaults in `triage_config`; changes need no code.
+- **D1–D3 (Max):** thresholds, default-lane rules, delegation roster. Defaults in `triage_configs`; changes need no code.
 - **D4 (Max / Andrés):** how Max appears in the sources. Until then, `delegate_empty_owner_is_ceo` = on.
 - **D5 (Andrés):** the 18 test rows in `task_lanes` (Carlos / Andrés). Kept; they are per user and do not affect Max.
 - **Write-back of Done / Drop / Reschedule to the sources:** out of scope. Loom is read-only against Attio, Linear and Calendar by design; Airtable write-back semantics were never defined (see the 2026-09-17 docx).

@@ -4,7 +4,7 @@
 |---|---|
 | Story | MapKMigGon38571 · Triage lanes por domain, owner y source |
 | Sprint | 4 · cierra **2026-10-20** · QA: Gonzalo Lucas Ranieri |
-| Versión | 2.2 · 2026-10-12 · salida de la triage en tabla propia `command_center_triage` · reemplaza la sección 6 de `estimation-report.md` (v1.1) |
+| Versión | 2.2 · 2026-10-12 · salida de la triage en tabla propia `command_center_triages` · reemplaza la sección 6 de `estimation-report.md` (v1.1) |
 | Estado | **Aprobado por Andrés el 2026-10-12 · en ejecución** (ver sección 10, Avance) |
 | Workflow | Claude edita en `E:\projects\singular\mapking.ai`; Andrés commitea y pushea. **Escrituras en SS y comunicación con Max/equipo: solo Andrés o bajo pedido explícito.** Backups en Drive `Map King (Map.ai)/stories/MapKMigGon38571/` |
 | Documentos | `spec.md` y `schema.md` (**fuente de verdad** de reglas, contrato y campos) · `acceptance-criteria-stack.md` (AC sobre el stack, IDs F/T/D/E/S) · `estimation-report.md` (diagnóstico inicial) |
@@ -27,7 +27,7 @@ Max tiene tareas en Linear, Attio, Google Calendar y varias tablas de Airtable. 
 
 Tres piezas sobre lo que ya existe, sin IA nueva, sin tocar Loom ni las fuentes y con cambios de esquema solo aditivos:
 
-1. **Reglas configurables + script horario.** `triage_config` (umbrales) y `team_members` (equipo, alias, dominios). `triage-compute.js` aplica las reglas cada hora y escribe en cada tarea: stale, delegable, owner unificado, lane sugerida y posibles duplicados. Cambiar un umbral es editar una celda.
+1. **Reglas configurables + script horario.** `triage_configs` (umbrales) y `team_members` (equipo, alias, dominios). `triage-compute.js` aplica las reglas cada hora y escribe en cada tarea: stale, delegable, owner unificado, lane sugerida y posibles duplicados. Cambiar un umbral es editar una celda.
 2. **Lane manual o por regla.** Si Max movió la tarea, manda su decisión (`task_lanes`, como hoy). Si no, se usa `lane_suggested`, marcada "rule". Cada tarea siempre tiene lane, sin tocar lo de 38570.
 3. **Work · Queue.** Partimos de la página de Carlos y sumamos: tabs con manual/rule, badge de stale con motivo, "Delegate to X?", marca de valores de IA, aviso de resultado parcial y aviso claro si falta un campo.
 
@@ -49,11 +49,11 @@ De los 41 criterios de `acceptance-criteria-stack.md`: **8 hechos**, **3 no apli
 
 | Tema | v1.1 | v2 | Por qué |
 |---|---|---|---|
-| Reglas configurables | Fórmulas de Airtable leyendo `triage_config` | **Script de automatización horario** (`triage-compute.js`) que lee la config y escribe los resultados | Una fórmula de Airtable no puede leer otra tabla sin un link por fila. El patrón ya existe y funciona en 38570 (`needs-you-waiting-since.js`, horario) |
-| Dónde vive la salida | Campos nuevos en `command_center_tasks` | **Tabla `command_center_triage`, una fila por tarea (1:1)** | `command_center_tasks` ya tiene ~35 campos de tres dueños. Un escritor por tabla. Decidido 2026-10-12 |
-| Lane por defecto | Crear filas en `task_lanes` por regla | **`lane_suggested` en `command_center_triage`**; `task_lanes` queda solo para decisiones manuales | No crear cientos de filas por usuario ni disparar las automatizaciones de integridad de 38570. Lane efectiva = manual si existe, si no la sugerida |
+| Reglas configurables | Fórmulas de Airtable leyendo `triage_configs` | **Script de automatización horario** (`triage-compute.js`) que lee la config y escribe los resultados | Una fórmula de Airtable no puede leer otra tabla sin un link por fila. El patrón ya existe y funciona en 38570 (`needs-you-waiting-since.js`, horario) |
+| Dónde vive la salida | Campos nuevos en `command_center_tasks` | **Tabla `command_center_triages`, una fila por tarea (1:1)** | `command_center_tasks` ya tiene ~35 campos de tres dueños. Un escritor por tabla. Decidido 2026-10-12 |
+| Lane por defecto | Crear filas en `task_lanes` por regla | **`lane_suggested` en `command_center_triages`**; `task_lanes` queda solo para decisiones manuales | No crear cientos de filas por usuario ni disparar las automatizaciones de integridad de 38570. Lane efectiva = manual si existe, si no la sugerida |
 | `lane_basis` | Campo nuevo en `task_lanes` | Derivado en el contrato: hay fila manual → `manual`, si no → `rule` | Cero cambios en `task_lanes` |
-| Owner canónico y roster | Mapa en `triage_config` | Tabla **`team_members`** (nombre canónico, alias, email, es CEO, recibe delegaciones) | Sirve a la vez para normalizar owners y para sugerir "Delegate to X" |
+| Owner canónico y roster | Mapa en `triage_configs` | Tabla **`team_members`** (nombre canónico, alias, email, es CEO, recibe delegaciones) | Sirve a la vez para normalizar owners y para sugerir "Delegate to X" |
 | Lógica de reglas | Repartida entre fórmulas y UI | **Módulo puro** `triage-rules.js` con tests, inlineado en el script de automatización y reutilizado por el contrato de la extensión | Determinismo testeable (AC: "deterministic stale detection") |
 | Estimación | 29,5 h | **26 h** | Menos superficie: sin cambios en `task_lanes`, reglas en un solo lugar |
 
@@ -64,11 +64,11 @@ Lo que **no** cambia: el stack (Airtable + Hyperagent), Loom no se toca, sin IA 
 ```
 Loom (diario 07:47 + Slack) ──> command_center_tasks  (campos de Loom, intactos)
                                        │
-triage_config + team_members ──┐       │
+triage_configs + team_members ──┐       │
                                ▼       ▼
               triage-compute.js (automatización, cada hora)
                  · usa triage-rules.js (puro, testeado)
-                 · escribe SOLO en command_center_triage (1:1 por tarea)
+                 · escribe SOLO en command_center_triages (1:1 por tarea)
                  · log a priority_events
                                        │
                                        ▼
@@ -85,7 +85,7 @@ Dueños de cada escritura (nadie pisa a otro):
 | Escribe | En | Campos |
 |---|---|---|
 | Loom | `command_center_tasks` | los suyos (sin cambios) |
-| `triage-compute.js` | `command_center_triage` | todos sus campos (crea, actualiza, marca cerradas y huérfanas; nunca borra) |
+| `triage-compute.js` | `command_center_triages` | todos sus campos (crea, actualiza, marca cerradas y huérfanas; nunca borra) |
 | Work · Queue / Today | `task_lanes` | lane manual, overrides, `delegated_to`, acciones |
 | Todos | `priority_events` | eventos |
 
@@ -93,7 +93,7 @@ Dueños de cada escritura (nadie pisa a otro):
 
 Resumen. El detalle definitivo (tipos, defaults, IDs) está en `schema.md`.
 
-### Tabla nueva `triage_config` (una fila activa)
+### Tabla nueva `triage_configs` (una fila activa)
 
 | Campo | Tipo | Default propuesto |
 |---|---|---|
@@ -118,7 +118,7 @@ Resumen. El detalle definitivo (tipos, defaults, IDs) está en `schema.md`.
 | `receives_delegation` | checkbox | candidato para "Delegate to…" |
 | `domains` | multiple select | Sales / Delivery / Product / QA / Revenue / Ops → a quién sugerir por dominio |
 
-### Tabla nueva `command_center_triage` (1:1 con `command_center_tasks`, escrita solo por `triage-compute.js`)
+### Tabla nueva `command_center_triages` (1:1 con `command_center_tasks`, escrita solo por `triage-compute.js`)
 
 `command_center_tasks` recibe solo el link inverso `triage`. Además de los campos de abajo: `normalized_task_id` (primario), `task` (link) y `row_status` (`active` / `closed` / `orphan`).
 
@@ -188,10 +188,10 @@ Leyenda de responsable: **C** = Claude, **A** = Andrés (paso manual en Airtable
 |---|---|---|---|---|
 | 0 | Aprobación del plan. Claude prepara los textos (comentario SS, mensaje a Max); Andrés los revisa y publica | C + A | Textos en chat / `ss-drafts.md` | 0,5 h |
 | 1 | `spec.md` + `schema.md` de la story (AC sobre el stack, modelo, reglas, errores, trazabilidad, plan de pruebas). Copia en el project y backup en Drive | C | `docs/stories/MapKMigGon38571/spec.md`, `schema.md` | 2,5 h |
-| 2 | Esquema en Airtable vía MCP: `triage_config` (1 fila con defaults), `team_members` (sembrada con los owners vistos, sin `is_ceo` hasta que confirmes quién es Max en las fuentes), tabla `command_center_triage` (15 campos, link 1:1 a `command_center_tasks`), 4 tipos de evento. **Te aviso antes de ejecutar** | C | Esquema + IDs en `schema.md` | 1,5 h |
+| 2 | Esquema en Airtable vía MCP: `triage_configs` (1 fila con defaults), `team_members` (sembrada con los owners vistos, sin `is_ceo` hasta que confirmes quién es Max en las fuentes), tabla `command_center_triages` (15 campos, link 1:1 a `command_center_tasks`), 4 tipos de evento. **Te aviso antes de ejecutar** | C | Esquema + IDs en `schema.md` | 1,5 h |
 | 3 | `airtable/cct/lib/triage-rules.js` (puro) + `tests/triage-rules.test.js` (`node --test`): lanes, stale, delegate, owner, identidad, bordes (nulls, fechas inválidas, config faltante) | C | Lib + tests en verde | 4 h |
-| 4 | `airtable/cct/automations/triage-compute.js` (inlinea la lib con `tools/build-automations.js`), modo `dryRun`, upsert 1:1 en `command_center_triage` (crear, actualizar, cerradas, huérfanas, control de duplicados), escritura solo de cambios en lotes de 50, log a `priority_events` | C | Script + `dist/` para pegar | 2,5 h |
-| 4b | Crear la automatización "command_center_triage · compute · hourly", pegar el script, correr con `dryRun = yes`, revisar conteos, después `no` y encenderla | A (≈20 min) | Automatización activa | 1 h |
+| 4 | `airtable/cct/automations/triage-compute.js` (inlinea la lib con `tools/build-automations.js`), modo `dryRun`, upsert 1:1 en `command_center_triages` (crear, actualizar, cerradas, huérfanas, control de duplicados), escritura solo de cambios en lotes de 50, log a `priority_events` | C | Script + `dist/` para pegar | 2,5 h |
+| 4b | Crear la automatización "command_center_triages · compute · hourly", pegar el script, correr con `dryRun = yes`, revisar conteos, después `no` y encenderla | A (≈20 min) | Automatización activa | 1 h |
 | 5 | Recuperar `WorkQueuePage.tsx` de la extensión de Airtable al repo (copiar desde el editor de la extensión) | A (≈15 min) | Archivo en `airtable/cct/interface/` | 0,5 h |
 | 6 | `airtable/cct/interface/triageContract.ts` (puro): arma la fila de triage, lane efectiva + basis, filtros combinados + validación, procedencia, completitud. Tests con `node --test` | C | Módulo + tests | 3 h |
 | 7 | Integración en Work · Queue: tabs por lane efectiva con badge manual/rule, stale + motivo, prompt "Delegate to X?" (escribe `delegated_to` + `triage_action`), marcas de procedencia, banner completo/parcial, estado vacío, aviso de filtro inválido | C | `WorkQueuePage.tsx` actualizado | 5 h |
@@ -219,7 +219,7 @@ Leyenda de responsable: **C** = Claude, **A** = Andrés (paso manual en Airtable
 | U2 | Unit: contrato (filtros simples, combinados, inválidos, vacío) | Filtrado exacto; inválido → aviso + filtro descartado; vacío → lista vacía sin error |
 | A1 | Automatización en dry-run | Conteos coherentes con 146 abiertas; 0 escrituras |
 | A2 | Automatización live, dos corridas seguidas | 2ª corrida escribe 0 cambios (idempotente) |
-| A3 | Cambiar un umbral en `triage_config` | La siguiente corrida recalcula stale y lanes según la nueva config |
+| A3 | Cambiar un umbral en `triage_configs` | La siguiente corrida recalcula stale y lanes según la nueva config |
 | E1 | Work · Queue: filtrar por domain + owner + source | Solo tareas que cumplen los tres |
 | E2 | Tarea sin fila manual | Aparece en `lane_suggested` con badge "rule" |
 | E3 | Mover tarea a otra lane | Badge pasa a "manual"; `task_lanes` creada/actualizada; Today y On Fire siguen consistentes |
@@ -272,7 +272,7 @@ Leyenda de responsable: **C** = Claude, **A** = Andrés (paso manual en Airtable
 |---|---|---|---|---|
 | 0 | Aprobación, comentario en SS, mensaje a Max | Hecho | 2026-10-12 | Plan aprobado por Andrés. Comentario en SS publicado por Claude antes de la regla "SS solo con revisión item por item" (Andrés decide si queda). Mensaje a Max: lo maneja Andrés |
 | 1 | `spec.md` + `schema.md` | Hecho | 2026-10-12 | Copia del spec en el project (`claude/spec-MapKMigGon38571.md`) y backup en Drive |
-| 2 | Esquema en Airtable | Pendiente | | Requiere OK de Andrés antes de ejecutar |
+| 2 | Esquema en Airtable | Hecho | 2026-10-12 | Aprobado por Andrés. Tablas `triage_configs` (1 fila default), `team_members` (4 filas sembradas), `command_center_triages` (vacía), link inverso `triage` en `command_center_tasks`, 4 tipos de evento. IDs en `schema.md` |
 | 3 | `triage-rules.js` + tests | Pendiente | | |
 | 4 | `triage-compute.js` | Pendiente | | |
 | 4b | Automatización en Airtable | Pendiente (Andrés) | | |
