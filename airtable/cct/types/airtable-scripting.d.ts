@@ -20,8 +20,7 @@ declare namespace AirtableScripting {
     id: string;
     name: string;
     fields: Field[];
-    getField(idOrName: string): Field;
-    getFieldIfExists(idOrName: string): Field | null;
+    getField(idOrName: string): Field; // throws when the field does not exist
     selectRecordsAsync(opts?: { fields?: FieldRef[]; sorts?: unknown[] }): Promise<RecordQueryResult>;
     createRecordAsync(fields: { [fieldIdOrName: string]: CellValue }): Promise<string>;
     createRecordsAsync(records: { fields: { [fieldIdOrName: string]: CellValue } }[]): Promise<string[]>;

@@ -197,10 +197,18 @@ function idsText(ids: string[]): string {
 // Field checks
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Field lookup that never throws. The automation scripting API has no getFieldIfExists
+ * (that one belongs to the scripting extension), so search table.fields by id.
+ */
+function findField(table: AirtableScripting.Table, id: string): AirtableScripting.Field | null {
+  return table.fields.find((f) => f.id === id) ?? null;
+}
+
 /** Ids (or names) of required fields missing in a table. Heartbeat fields are optional. */
 function missingFields(tableId: string, fieldIds: string[]): string[] {
   const t = base.getTable(tableId);
-  return fieldIds.filter((id) => !t.getFieldIfExists(id));
+  return fieldIds.filter((id) => !findField(t, id));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -386,9 +394,9 @@ async function stampHeartbeat(recordId: string | null, status: string, summary: 
   if (!recordId || dryRun) return;
   const C = CCT.configs;
   const t = base.getTable(C.table);
-  const fAt = t.getFieldIfExists(C.lastRunAt);
-  const fStatus = t.getFieldIfExists(C.lastRunStatus);
-  const fSummary = t.getFieldIfExists(C.lastRunSummary);
+  const fAt = findField(t, C.lastRunAt);
+  const fStatus = findField(t, C.lastRunStatus);
+  const fSummary = findField(t, C.lastRunSummary);
   if (!fAt) {
     console.warn('cct_triage_configs.last_run_at (fldQkNOnM1kIMoaR1) not found: heartbeat not stamped (Work · Queue will show "triage pending").');
     return;

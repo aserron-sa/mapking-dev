@@ -1,0 +1,58 @@
+{
+  "$comment": "Airtable configuration of the automation that runs cct-triage-compute. The script itself is NOT here: it is the build output airtable/cct/dist/automations/cct-triage-compute.js (npm run cct:build), pasted by hand into the Run a script action. Keep this file in sync when the automation is changed in Airtable. Story MapKMigGon38571.",
+  "base": { "name": "Map King Hub", "id": "appcdpGNTo0DouoqJ" },
+  "automation": {
+    "id": "wflFoOYmzWHZEcHPA",
+    "url": "https://airtable.com/appcdpGNTo0DouoqJ/wflFoOYmzWHZEcHPA",
+    "name": "command_center_triages · compute · hourly",
+    "description": "MapKMigGon38571. Every hour, computes the triage values for every command_center_tasks row (owner, stale state, suggested lane, delegation eligibility, cross-source identity) and writes them to command_center_triages, one row per task. Starts in dry-run mode (dryRun = yes): it plans and logs but writes nothing. Change the input to dryRun = no to write."
+  },
+  "trigger": {
+    "type": "At a scheduled time (cron)",
+    "frequency": "hourly",
+    "interval": 1,
+    "start": "2026-10-13T03:10:00.000Z"
+  },
+  "action": {
+    "type": "Run a script",
+    "nodeKey": "wac40Y8o0Dfp7cb0r",
+    "scriptFile": "airtable/cct/dist/automations/cct-triage-compute.js",
+    "description": "Reads the one active row of cct_triage_configs, the team_members roster, all command_center_tasks, the existing command_center_triages rows, dev_tickets (Linear issue ids) and approvals (linked invoices and follow-ups). Checks that every field it needs exists and that the config is valid; if not, it stops and logs a triage_data_issue event in priority_events. Otherwise it plans a 1:1 sync (create a triage row for each new task, update only the values that changed, mark rows closed when the task is closed and orphan when the task disappeared, report duplicate rows; it never deletes). With dryRun = yes it writes nothing and only logs a '[dry run]' triage_compute event with the counts. With dryRun = no it writes in batches of 50 within a 22 second budget, logs one triage_compute event and one triage_data_issue event per issue type, and stamps last_run_at, last_run_status and last_run_summary on the active cct_triage_configs row. It never writes command_center_tasks or task_lanes.",
+    "inputVariables": [
+      { "name": "dryRun", "type": "text", "values": ["yes", "no"], "current": "yes", "note": "Anything other than \"no\" is treated as yes." }
+    ],
+    "outputs": [
+      { "name": "result", "type": "string", "note": "ok | partial | dry_run | validation_failed" },
+      { "name": "created", "type": "number" },
+      { "name": "updated", "type": "number" },
+      { "name": "plannedCreates", "type": "number" },
+      { "name": "plannedUpdates", "type": "number" },
+      { "name": "failed", "type": "number" },
+      { "name": "summary", "type": "string" }
+    ],
+    "outputsNotDeclared": [
+      { "name": "message", "note": "The script also sets output 'message' on validation_failed paths, but it is not declared in the outputs above. Declare it as string if you want to see it in the run output." }
+    ]
+  },
+  "state": {
+    "deployed": false,
+    "note": "Created off, in dry-run mode. Dry run 1 on 2026-10-13: plannedCreates 837, plannedUpdates 1, 0 failures."
+  },
+  "writes": ["command_center_triages (all fields)", "priority_events (its own events)", "cct_triage_configs (last_run_at, last_run_status, last_run_summary)"],
+  "neverWrites": ["command_center_tasks", "task_lanes"],
+  "goLive": [
+    "1. Dry run (dryRun = yes): review result and summary.",
+    "2. dryRun = no, run Test: expect created = tasks to create, failed 0, left for next run 0.",
+    "3. Run Test again with dryRun = no: must write nothing (created 0, updated 0).",
+    "4. Turn the automation on. Keep dryRun = no in the input."
+  ],
+  "tables": {
+    "cct_triage_configs": "tblGZaFBg7KLbcuf7",
+    "team_members": "tblA658S9otgj9p3n",
+    "command_center_tasks": "tblX61yfIFroyhMTj",
+    "command_center_triages": "tblaG64QpuRInrm5X",
+    "dev_tickets": "tblSWc1WrL5qjzTzs",
+    "approvals": "tblRilIMAIEiUSFof",
+    "priority_events": "tbl0k4YFnduwhMJG2"
+  }
+}

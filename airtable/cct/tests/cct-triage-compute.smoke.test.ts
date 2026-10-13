@@ -26,16 +26,19 @@ interface FakeRecord { id: string; cells: Cells }
 class FakeTable {
   records: FakeRecord[] = [];
   id: string;
-  fields: string[];
+  fields: { id: string }[];
   private prefix: string;
   private seq = 0;
   constructor(id: string, fields: string[], prefix: string) {
     this.id = id;
-    this.fields = fields;
+    this.fields = fields.map((id) => ({ id }));
     this.prefix = prefix;
   }
-  getFieldIfExists(idOrName: string) {
-    return this.fields.includes(idOrName) ? { id: idOrName } : null;
+  // Same as the real automation API: no getFieldIfExists; getField throws when missing.
+  getField(idOrName: string) {
+    const f = this.fields.find((x) => x.id === idOrName);
+    if (!f) throw new Error(`No field ${idOrName}`);
+    return f;
   }
   async selectRecordsAsync(_opts?: unknown) {
     return { records: this.records.map((r) => ({ id: r.id, getCellValue: (f: string) => r.cells[f] ?? null })) };
