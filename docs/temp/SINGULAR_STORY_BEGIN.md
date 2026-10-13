@@ -1,5 +1,5 @@
 
-Arrancamos la story {CÓDIGO_STORY} del project Map King (Map.ai).
+Arrancamos la story {MapKMigGon38571} del project Map King (Map.ai).
 
 ## 1. Contexto (solo lectura; no cambies nada todavía)
 
@@ -7,7 +7,7 @@ Arrancamos la story {CÓDIGO_STORY} del project Map King (Map.ai).
   la actividad (get-story-activity), la evidencia y los links existentes. Anotá estado,
   sprint, fecha de cierre, puntos, épica, QA asignado y criterios de aceptación.
 - Project: revisá los docs relacionados (project_search) y si ya existe
-  claude/spec-{CÓDIGO_STORY}.md.
+  claude/spec-{MapKMigGon38571}.md.
 - Sistemas vivos: verificá el estado real en Airtable (Map King Hub), Hyperagent
   y Slack según lo que toque la story. No asumas que algo está hecho porque un
   comentario lo diga.
@@ -28,7 +28,7 @@ Devolveme un resumen corto con:
 
 - Pasá la story a in_progress (si no lo está) y dejá un comentario en SS con el
   plan resumido.
-- Creá o actualizá claude/spec-{CÓDIGO_STORY}.md en el project con: objetivo,
+- Creá o actualizá claude/spec-{MapKMigGon38571}.md en el project con: objetivo,
   arquitectura, modelo de datos, manejo de errores, trazabilidad de criterios y
   plan de pruebas.
 
@@ -45,3 +45,18 @@ Devolveme un resumen corto con:
 - Actualizá la tabla de trazabilidad en el spec.
 - Dejá un comentario final en SS: qué se hizo, qué queda abierto y cómo probarlo.
 - Recién entonces pedime confirmación para hacer send-to-qa.
+
+
+
+
+---
+
+Aclaraciones
+
+- Nuestro stack esta compuesto por Airtable y agentes Hyperagent, tenemos consumo de fuentes como linear, attio, google calendar, y hay un servidor supabase que no usamos directamente
+- Consecuentemente las vistas son interfaces Airtable
+- Tenemos un repositorio para guardar los elementos como el codigo de las vistas o las automations: https://github.com/aserron-sa/mapking-dev
+- Cuando los spec hablan de BACKEND, hablan del stack anteriormente nombrado
+
+Decisiones que afectaron la letras de los stories
+Los stories estan escritos con implementacion abierta, al acotar el stack a lo definido, la letra de las stories cambia, algunas cosas no aplican y otras quedan mas definidas, en general se vuelve mas concreto
