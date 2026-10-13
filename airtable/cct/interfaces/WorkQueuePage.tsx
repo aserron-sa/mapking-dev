@@ -819,9 +819,19 @@ function WorkQueue(props: {
             [L.actionStatus.id]: { name: action },
             [L.synced.id]: WRITABLE_SOURCES.has(row.source ?? ''),
         };
-        if (action === 'rescheduled' && L.rescheduledDate) fields[L.rescheduledDate.id] = nextWeekDate();
+        const newDate = action === 'rescheduled' ? nextWeekDate() : null;
+        if (newDate && L.rescheduledDate) fields[L.rescheduledDate.id] = newDate;
         try {
             await upsertLaneRow(row.recordId, fields);
+            // Audit trail: every action leaves a triage_action event, like move and delegate.
+            const synced = WRITABLE_SOURCES.has(row.source ?? '') ? 'synced to source' : 'local only, not synced to source';
+            const label = action === 'rescheduled' ? 'rescheduled +7d' : action;
+            logEvent(
+                'triage_action',
+                `${label} · ${row.taskId}${newDate ? ` → ${newDate}` : ''}`,
+                `Action ${row.actionStatus} → ${action}${newDate ? `; pushed to ${newDate}` : ''}; ${synced}`,
+                row.recordId,
+            );
         } catch (e) {
             alert(`Could not save the action: ${(e as Error).message}`);
         }
