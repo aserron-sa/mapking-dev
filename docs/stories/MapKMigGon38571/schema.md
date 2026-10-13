@@ -45,6 +45,9 @@ One active row. The script reads the first row with `active` = true; none or mor
 | `delegate_empty_owner_is_ceo` | `fldSgrMAML9QoBSf2` | checkbox | ✔ | Treat tasks without owner as the CEO's (decision D4) |
 | `invalid_rows_max_pct` | `fldjXNwk0KSQXo8i8` | number (integer) | 10 | Above this % of invalid open rows, the run writes nothing |
 | `notes` | `fldA2SKjXsMEmhlai` | long text | | What was decided, by whom, when |
+| `last_run_at` | *pending* | date-time (UTC) | Heartbeat: start of the last live run of cct-triage-compute |
+| `last_run_status` | *pending* | single select (`ok`, `partial`, `failed`) | Heartbeat: outcome of that run |
+| `last_run_summary` | *pending* | long text | Heartbeat: counts of that run |
 
 The tag lists reuse Loom's fixed tag list: needs-max, waiting-on-external, client-facing, bug, approval, billing, meeting, follow-up, content, deadline-risk.
 

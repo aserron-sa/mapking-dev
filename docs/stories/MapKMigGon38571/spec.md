@@ -181,7 +181,7 @@ type Filters = { domain?: string[]; owner?: string[]; source?: string[]; lane?: 
 |---|---|
 | Last Loom run not clean | Latest `loom_sync_runs` row with status `success`, `partial` or `failure` is `partial` or `failure` (`running`, `rejected_busy` and `abandoned` are skipped) |
 | Source unavailable | Any open row with `source_status` = `unavailable` (named by source) |
-| Triage not computed | Any open task without a `command_center_triages` row, or the newest `computed_at` older than 2 hours |
+| Triage not computed | Any open task without a `command_center_triages` row, or `triage_configs.last_run_at` older than 2 hours, or `last_run_status` ≠ ok |
 
 The page shows a banner listing every reason. Data still renders.
 
@@ -235,7 +235,7 @@ Changes this story makes to that behavior:
 | Write to `task_lanes` fails (page) | Change reverted in the page, error shown | `triage_action`, `dependency_failed` |
 | AI enrichment failed in Loom | Not handled here: Loom writes fallback values (`Uncategorized`) | Loom's `loom_sync_runs` |
 
-Idempotency: the script compares each computed value with the stored one and writes only differences (batches of 50). A second run with no data changes writes nothing. Rows are created only for tasks that have none.
+Idempotency: the script compares each computed value with the stored one and writes only differences (batches of 50). A second run with no data changes writes nothing. Rows are created only for tasks that have none. `computed_at` is therefore "values last changed at"; run freshness is the heartbeat `triage_configs.last_run_at` / `last_run_status` / `last_run_summary`, stamped by every live run.
 
 ## 7. Security and performance
 

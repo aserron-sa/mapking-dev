@@ -274,7 +274,7 @@ Leyenda de responsable: **C** = Claude, **A** = Andrés (paso manual en Airtable
 | 1 | `spec.md` + `schema.md` | Hecho | 2026-10-12 | Copia del spec en el project (`claude/spec-MapKMigGon38571.md`) y backup en Drive |
 | 2 | Esquema en Airtable | Hecho | 2026-10-12 | Aprobado por Andrés. Tablas `triage_configs` (1 fila default), `team_members` (4 filas sembradas), `command_center_triages` (vacía), link inverso `triage` en `command_center_tasks`, 4 tipos de evento. IDs en `schema.md` |
 | 3 | Reglas + tests | Hecho | 2026-10-12 | `airtable/cct/cct-triage-rules.ts` + `airtable/cct/tests/cct-triage-rules.test.ts` (13 tests en verde, `node --test`). Convención: TS/TSX, prefijo `cct-`, carpetas `airtable/cct/{automations,interfaces,tests}` |
-| 4 | `cct-triage-compute.ts` | Pendiente | | |
+| 4 | `cct-triage-compute.ts` + build | Hecho (código) | 2026-10-12 | `automations/cct-triage-compute.ts`, `cct-triage-sync.ts` (plan 1:1 puro), `tools/cct-build.ts` → `dist/automations/cct-triage-compute.js`. 27 tests en verde (13 reglas, 10 sync, 4 smoke sobre el JS generado con una base Airtable simulada). Falta: 3 campos heartbeat en `triage_configs` (OK de Andrés) |
 | 4b | Automatización en Airtable | Pendiente (Andrés) | | |
 | 5 | Recuperar `WorkQueuePage.tsx` | Hecho | 2026-10-12 | Export de Andrés (source_export.zip). Guardado tal cual en `airtable/cct/interfaces/WorkQueuePage.tsx` (+ `extension-template/` con package.json y style.css). Hallazgos: muestra tareas cerradas (no filtra `lifecycle`), oculta tareas de fuentes no `ok`, busca campos por nombre |
 | 6 | `cct-triage-contract.ts` + tests | Pendiente | | |

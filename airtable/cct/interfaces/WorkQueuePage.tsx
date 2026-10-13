@@ -9,6 +9,10 @@
  * 2026-10-12 by Andrés Serrón (source export). The code below is unchanged; only this
  * header was added. It is rewritten in steps 6–7 of the plan.
  *
+ * Live version check (2026-10-12): the code pasted by Andrés from the Airtable editor is the
+ * export's frontend/index.tsx without `import './style.css';` (Tailwind classes still render).
+ * This file matches the live version.
+ *
  * What it does today (see docs/stories/MapKMigGon38571/work-queue.md):
  *   - Lane tabs (All / On Fire / This Week / Waiting On / Queued / Icebox), filter pills
  *     (domain, owner, source), detail panel, Done / Drop / Reschedule, bulk retag /
@@ -25,7 +29,6 @@
  *
  * Docs: docs/stories/MapKMigGon38571/{spec,schema,implementation-plan}.md
  */
-import './style.css';
 import React, { useState, useMemo } from 'react';
 import {
     initializeBlock,
