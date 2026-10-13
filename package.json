@@ -9,7 +9,7 @@
   "scripts": {
     "typecheck": "npm run typecheck:node && npm run typecheck:interfaces",
     "cct:build": "node airtable/cct/tools/cct-build.ts",
-    "cct:test": "node --test airtable/cct/tests/cct-triage-rules.test.ts airtable/cct/tests/cct-triage-sync.test.ts airtable/cct/tests/cct-triage-compute.smoke.test.ts",
+    "cct:test": "node --test airtable/cct/tests/cct-triage-rules.test.ts airtable/cct/tests/cct-triage-sync.test.ts airtable/cct/tests/cct-triage-compute.smoke.test.ts airtable/cct/tests/cct-triage-contract.test.ts",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
     "typecheck:interfaces": "tsc --noEmit -p tsconfig.json"
   },
