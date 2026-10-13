@@ -67,7 +67,7 @@ class FakeTable {
 const IDS = {
   configs: ['fld9TdaRYZ0RqDoYi', 'fldbeKikUZMGaeamo', 'fldYi5Zf1P1AQq6pg', 'fldiZDW8iY83QkEhm', 'fld9BwUH18MCo3Th0', 'fldiRwMC7U06E71Oo',
     'fldvkqfTjlbYp0izV', 'fld0smX0xKbmYJZaE', 'fldLfGTM3ytpZ3Ubt', 'fldf3J0NdBvqfirKq', 'fldSgrMAML9QoBSf2', 'fldjXNwk0KSQXo8i8',
-    'last_run_at', 'last_run_status', 'last_run_summary'],
+    'fldQkNOnM1kIMoaR1', 'fldiWWUK6iQB7DGMD', 'fld6TMgPDRAmq5FP1'],
   members: ['fldeTXTbJVJnKmWzh', 'fldTG4itOjWus9IYo', 'fldMtIk99zcWwVPqT', 'fldP5jwpZCJ91EFLm', 'fldkOiONCO7r1l3mM', 'fldDQwk79VEfJwHAf', 'flduiUrc076re9UCr'],
   tasks: ['fldmSHhnTbC1Go3Dw', 'fldceaJIeHpA3Tdae', 'fldejhIOeD3YCFRRP', 'fldECSTk2LFWGIS6V', 'fldld41zIqgdNXeyn', 'fldG6wphuQyvtHSIy',
     'fldzqG2oVnK93COcW', 'fldYqQehpEy918bve', 'fldfxuYNvITcMIlFu', 'fld0pXalwYvckZmQE'],
@@ -137,7 +137,7 @@ test('A1 dry run: plans but writes no triage rows; logs the run', async () => {
   assert.equal(out.plannedCreates, 3);
   assert.equal(t.triages.records.length, 0);
   assert.ok(t.events.records.some((e) => (e.cells.fldxNmEoRpB4SRouZ as string).startsWith('[dry run] triage · run')));
-  assert.equal(t.configs.records[0].cells.last_run_at, undefined); // no heartbeat on dry run
+  assert.equal(t.configs.records[0].cells.fldQkNOnM1kIMoaR1, undefined); // no heartbeat on dry run
 });
 
 test('A2 live twice: creates one row per task, second run writes nothing', async () => {
@@ -153,7 +153,7 @@ test('A2 live twice: creates one row per task, second run writes nothing', async
   assert.deepEqual(byKey['attio:closed-one'].fldKSj0WnXERwtYru, { name: 'closed' });
   assert.equal(byKey['linear:MAPKING-478'].fldyj9poKbR6Wjw5q, true); // empty owner counts as CEO
   assert.equal(byKey['linear:MAPKING-478'].fldxWbxEz73BmzTPc, 'Kyle'); // Sales → Kyle
-  assert.ok(t.configs.records[0].cells.last_run_at, 'heartbeat stamped');
+  assert.ok(t.configs.records[0].cells.fldQkNOnM1kIMoaR1, 'heartbeat stamped');
 
   // Fake the inverse link Airtable would maintain, then run again.
   for (const r of t.triages.records) {

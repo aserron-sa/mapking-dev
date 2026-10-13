@@ -8,7 +8,7 @@ Code (scripts and extension) always uses the IDs below, never names.
 
 | Table | ID |
 |---|---|
-| `triage_configs` | `tblGZaFBg7KLbcuf7` (active row `recEPlvRzBf0UUtKB`) |
+| `cct_triage_configs` | `tblGZaFBg7KLbcuf7` (active row `recEPlvRzBf0UUtKB`) |
 | `team_members` | `tblA658S9otgj9p3n` |
 | `command_center_triages` | `tblaG64QpuRInrm5X` |
 | `command_center_tasks` | `tblX61yfIFroyhMTj` (new field `triage` = `fld0pXalwYvckZmQE`) |
@@ -23,9 +23,9 @@ Code (scripts and extension) always uses the IDs below, never names.
 | `cct-triage-compute.ts` | `priority_events` | `triage_compute`, `triage_data_issue` |
 | Work · Queue (extension) | `task_lanes` | lane, overrides, `delegated_to`, `action_status` (existing fields) |
 | Work · Queue | `priority_events` | `triage_action`, `triage_filter_invalid` |
-| Andrés / Max (by hand) | `triage_configs`, `team_members` | Everything (configuration) |
+| Andrés / Max (by hand) | `cct_triage_configs`, `team_members` | Everything (configuration) |
 
-## New table `triage_configs`
+## New table `cct_triage_configs`
 
 One active row. The script reads the first row with `active` = true; none or more than one → the run stops and logs `triage_data_issue`.
 
@@ -45,9 +45,9 @@ One active row. The script reads the first row with `active` = true; none or mor
 | `delegate_empty_owner_is_ceo` | `fldSgrMAML9QoBSf2` | checkbox | ✔ | Treat tasks without owner as the CEO's (decision D4) |
 | `invalid_rows_max_pct` | `fldjXNwk0KSQXo8i8` | number (integer) | 10 | Above this % of invalid open rows, the run writes nothing |
 | `notes` | `fldA2SKjXsMEmhlai` | long text | | What was decided, by whom, when |
-| `last_run_at` | *pending* | date-time (UTC) | Heartbeat: start of the last live run of cct-triage-compute |
-| `last_run_status` | *pending* | single select (`ok`, `partial`, `failed`) | Heartbeat: outcome of that run |
-| `last_run_summary` | *pending* | long text | Heartbeat: counts of that run |
+| `last_run_at` | `fldQkNOnM1kIMoaR1` | date-time (UTC) | Heartbeat: start of the last live run of cct-triage-compute |
+| `last_run_status` | `fldiWWUK6iQB7DGMD` | single select (`ok`, `partial`, `failed`) | Heartbeat: outcome of that run |
+| `last_run_summary` | `fld6TMgPDRAmq5FP1` | long text | Heartbeat: counts of that run |
 
 The tag lists reuse Loom's fixed tag list: needs-max, waiting-on-external, client-facing, bug, approval, billing, meeting, follow-up, content, deadline-risk.
 

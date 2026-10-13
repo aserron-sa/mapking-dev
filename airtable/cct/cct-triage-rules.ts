@@ -29,7 +29,7 @@ export const SUGGESTED_LANES: readonly SuggestedLane[] = ['this_week', 'waiting_
 export const DOMAINS: readonly string[] = ['Sales', 'Delivery', 'Product', 'QA', 'Revenue', 'Ops'];
 export const SOURCES: readonly string[] = ['Attio', 'Linear', 'Airtable', 'Google Calendar', 'Manual'];
 
-/** One active row of triage_configs, already parsed. */
+/** One active row of cct_triage_configs, already parsed. */
 export interface TriageConfig {
   timezone: string;
   staleInactiveDays: number;

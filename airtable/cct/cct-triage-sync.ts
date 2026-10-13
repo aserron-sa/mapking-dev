@@ -15,7 +15,7 @@
  *     record id), report the others; never delete.
  *   - Only changed fields are written. A second run with no data changes plans 0 writes.
  *   - computed_at is set only on rows that are created or changed ("values last changed at").
- *     Run freshness is tracked separately in triage_configs.last_run_at.
+ *     Run freshness is tracked separately in cct_triage_configs.last_run_at.
  *
  * Abort rule (spec §6): if invalid open rows > cfg.invalidRowsMaxPct of open rows, the plan is
  * empty and `aborted` explains why.

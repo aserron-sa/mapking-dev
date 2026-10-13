@@ -14,7 +14,7 @@ The original AC is written for a generic backend service with a request/response
 
 - **Ingestion and normalization** already exist: Loom reads Attio, Linear, Google Calendar and Airtable tables, and writes one row per task to `command_center_tasks` (story MapKMigGon38532).
 - **The triage contract** is the Airtable schema (documented fields) plus a pure module in the Work · Queue extension (`cct-triage-contract.ts`) that builds the triage row the page shows.
-- **Configurable rules** live in Airtable tables (`triage_configs`, `team_members`) and are applied by an hourly automation script (`cct-triage-compute.ts`) built on a tested rules module (`cct-triage-rules.ts`).
+- **Configurable rules** live in Airtable tables (`cct_triage_configs`, `team_members`) and are applied by an hourly automation script (`cct-triage-compute.ts`) built on a tested rules module (`cct-triage-rules.ts`).
 - **"Request" / "response"** become: the filter state the user sets in Work · Queue, and the set of triage rows the page renders.
 - **No new AI** is introduced. The only AI values are the ones Loom already writes (`category`, `tags`, `schedulable`).
 
@@ -28,8 +28,8 @@ Each criterion below keeps the original order. Tags: **[Kept]** same meaning, ma
 2. **[Kept]** Lane values are exactly `on_fire`, `this_week`, `waiting_on`, `queued`, `icebox` (shown as On Fire, This Week, Waiting On, Queued, Icebox).
 3. **[Kept]** Work · Queue filters by any single dimension or any combination of domain, owner, source and lane, across all sources Loom syncs (Attio, Linear, Google Calendar, Airtable).
 4. **[Reinterpreted]** The unified triage data is `command_center_tasks` (one normalized row per source task, maintained by Loom) plus its 1:1 triage row in `command_center_triages` (written by `cct-triage-compute.ts`), plus the signed-in user's decisions in `task_lanes`. The page builds one triage row per task with the same shape regardless of source.
-5. **[Reinterpreted]** Stale is computed by `cct-triage-compute.ts` from thresholds in `triage_configs` and written to `command_center_triages.stale_state` (`stale` / `fresh` / `unknown`) and `stale_reason`. Changing a threshold in `triage_configs` changes the result on the next hourly run, with no code change.
-6. **[Reinterpreted]** Delegation eligibility is computed by `cct-triage-compute.ts` from the rule in `triage_configs` and the roster in `team_members`, and written to `command_center_triages` (`delegate_eligible`, `delegate_reason` and `delegate_suggested_to`).
+5. **[Reinterpreted]** Stale is computed by `cct-triage-compute.ts` from thresholds in `cct_triage_configs` and written to `command_center_triages.stale_state` (`stale` / `fresh` / `unknown`) and `stale_reason`. Changing a threshold in `cct_triage_configs` changes the result on the next hourly run, with no code change.
+6. **[Reinterpreted]** Delegation eligibility is computed by `cct-triage-compute.ts` from the rule in `cct_triage_configs` and the roster in `team_members`, and written to `command_center_triages` (`delegate_eligible`, `delegate_reason` and `delegate_suggested_to`).
 7. **[Kept]** Given filters for domain, owner, source and/or lane, Work · Queue shows only the tasks that match every active filter.
 8. **[Kept]** Given a task with `stale_state` = `stale`, Work · Queue shows it with a stale badge and its `stale_reason`.
 9. **[Kept]** Given a task with `delegate_eligible` = true, Work · Queue shows a "Delegate to …?" prompt, using `delegate_suggested_to` when there is one. Accepting writes `delegated_to` in the user's `task_lanes` row and logs a `triage_action` event.
@@ -147,7 +147,7 @@ Each criterion below keeps the original order. Tags: **[Kept]** same meaning, ma
 | Structured error responses | Field-level messages in the page + `priority_events` |
 | Retry policy | Loom (sources); not applicable to native Airtable reads |
 | Lane assignment for every task | Manual lane in `task_lanes`, or `lane_suggested` computed by rule |
-| Configurable rules | `triage_configs` and `team_members` tables |
+| Configurable rules | `cct_triage_configs` and `team_members` tables |
 | Complete vs partial response | Banner from `loom_sync_runs`, `source_status` and triage freshness |
 
 ## Open items that change wording, not structure

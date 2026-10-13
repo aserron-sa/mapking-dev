@@ -56,6 +56,6 @@ Hourly automation that fills `command_center_triages` (one row per task, 1:1 wit
 
 ## Guarantees
 
-- Writes only `command_center_triages`, its own `priority_events` and the `triage_configs` heartbeat (`last_run_at`, `last_run_status`, `last_run_summary`). Never writes `command_center_tasks` or `task_lanes`. Never deletes.
-- Stops before writing when: a required field is missing or renamed, `triage_configs` has no / several active rows or invalid values, or more than `invalid_rows_max_pct` of open rows are invalid. Each case logs `triage_data_issue` (`validation_failed`).
+- Writes only `command_center_triages`, its own `priority_events` and the `cct_triage_configs` heartbeat (`last_run_at`, `last_run_status`, `last_run_summary`). Never writes `command_center_tasks` or `task_lanes`. Never deletes.
+- Stops before writing when: a required field is missing or renamed, `cct_triage_configs` has no / several active rows or invalid values, or more than `invalid_rows_max_pct` of open rows are invalid. Each case logs `triage_data_issue` (`validation_failed`).
 - Batches of 50, retry once, then record by record; stops starting batches after 22 s (Airtable stops scripts at 30 s) and continues next hour.

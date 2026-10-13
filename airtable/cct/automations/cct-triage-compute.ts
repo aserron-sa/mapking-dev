@@ -12,7 +12,7 @@
  *   Input variables:  dryRun = "yes" | "no"   (typed text; anything but "no" is treated as yes)
  *
  * What it does, every run:
- *   1. Reads the active row of triage_configs and validates it. None, more than one, or invalid
+ *   1. Reads the active row of cct_triage_configs and validates it. None, more than one, or invalid
  *      values → stops before writing and logs triage_data_issue (validation_failed).
  *   2. Reads team_members, command_center_tasks, command_center_triages, dev_tickets, approvals.
  *      Checks that every field it needs exists; a missing field → stops and logs its id.
@@ -22,11 +22,11 @@
  *      once, then record by record; failures are listed in the run event. Stops starting new
  *      batches after WRITE_BUDGET_MS; the next run continues where this one stopped.
  *   5. Logs one triage_compute event with the counts, one triage_data_issue per issue type,
- *      and stamps triage_configs.last_run_at / last_run_status / last_run_summary (heartbeat the
+ *      and stamps cct_triage_configs.last_run_at / last_run_status / last_run_summary (heartbeat the
  *      Work · Queue page uses to tell "complete" from "partial").
  *
  * Writes ONLY: command_center_triages (all fields), priority_events (its own events),
- * triage_configs heartbeat fields. Never writes command_center_tasks (Loom's table) or task_lanes.
+ * cct_triage_configs heartbeat fields. Never writes command_center_tasks (Loom's table) or task_lanes.
  *
  * Rules: docs/stories/MapKMigGon38571/spec.md §4 · Schema and IDs: docs/stories/MapKMigGon38571/schema.md
  */
@@ -60,9 +60,9 @@ const CCT = {
     delegateEmptyOwnerIsCeo: 'fldSgrMAML9QoBSf2',
     invalidRowsMaxPct: 'fldjXNwk0KSQXo8i8',
     // Heartbeat (optional: if missing, the run still works and logs a warning)
-    lastRunAt: 'last_run_at',
-    lastRunStatus: 'last_run_status',
-    lastRunSummary: 'last_run_summary',
+    lastRunAt: 'fldQkNOnM1kIMoaR1',
+    lastRunStatus: 'fldiWWUK6iQB7DGMD',
+    lastRunSummary: 'fld6TMgPDRAmq5FP1',
   },
   members: {
     table: 'tblA658S9otgj9p3n',
@@ -212,7 +212,7 @@ async function readConfig(): Promise<{ cfg: TriageConfig | null; recordId: strin
   const q = await base.getTable(C.table).selectRecordsAsync({ fields: Object.values(C).filter((v) => v.startsWith('fld')) });
   const active = q.records.filter((r: any) => r.getCellValue(C.active) === true);
   if (active.length !== 1) {
-    return { cfg: null, recordId: null, problems: [`triage_configs must have exactly 1 active row; found ${active.length}`] };
+    return { cfg: null, recordId: null, problems: [`cct_triage_configs must have exactly 1 active row; found ${active.length}`] };
   }
   const r = active[0];
   const cfg: TriageConfig = {
@@ -390,7 +390,7 @@ async function stampHeartbeat(recordId: string | null, status: string, summary: 
   const fStatus = t.getFieldIfExists(C.lastRunStatus);
   const fSummary = t.getFieldIfExists(C.lastRunSummary);
   if (!fAt) {
-    console.warn('triage_configs.last_run_at not found: heartbeat not stamped (Work · Queue will show "triage pending").');
+    console.warn('cct_triage_configs.last_run_at (fldQkNOnM1kIMoaR1) not found: heartbeat not stamped (Work · Queue will show "triage pending").');
     return;
   }
   const fields: Record<string, unknown> = { [fAt.id]: at };
@@ -428,7 +428,7 @@ async function main() {
   // 2. Config
   const { cfg, recordId: configRecordId, problems } = await readConfig();
   if (!cfg) {
-    const msg = `triage_configs invalid: ${problems.join('; ')}. Nothing written.`;
+    const msg = `cct_triage_configs invalid: ${problems.join('; ')}. Nothing written.`;
     await logEvent('triage_data_issue', 'validation_failed', 'triage · config invalid', msg, dryRun);
     await stampHeartbeat(configRecordId, 'failed', msg, now, dryRun);
     output.set('result', 'validation_failed');

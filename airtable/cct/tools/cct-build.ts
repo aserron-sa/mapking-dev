@@ -5,8 +5,8 @@
  * Airtable accepts ONE self-contained file per automation script (JavaScript, no imports)
  * and ONE frontend/index.tsx per interface component, so local modules are inlined here.
  *
- * Usage (repo root, Node 22.18+, no dependencies):
- *     node airtable/cct/tools/cct-build.ts
+ * Usage (repo root, Node 22.18+, after `npm install` once):
+ *     node airtable/cct/tools/cct-build.ts      (or: npm run cct:build)
  *
  * Outputs (git-ignored by the repo's `dist/` rule: rebuild before pasting, never edit by hand):
  *     airtable/cct/dist/automations/cct-triage-compute.js
@@ -15,8 +15,11 @@
  *   1. Concatenates the modules in dependency order (rules → sync → entry file).
  *   2. Removes `import … from './…'` / `'../…'` lines (local modules are now in the same file)
  *      and the `export` keyword at the start of declarations. Package imports are kept.
- *   3. For automations, strips TypeScript types with Node's built-in module.stripTypeScriptTypes
- *      (only erasable syntax is used in the sources, so no compiler is needed).
+ *   3. For automations, removes the TypeScript types with the TypeScript compiler's transpiler
+ *      (devDependency `typescript`). The output is meant to be READ and PASTED in Airtable by
+ *      people, so it keeps every comment, uses normal indentation (4 spaces) and leaves no
+ *      blank "holes" where types used to be; doc comments of removed types/interfaces are
+ *      dropped together with them.
  *   4. Adds a header with the source files and their SHA-256, so the pasted code can be traced
  *      back to a commit.
  *   5. Checks the result: no remaining `import`/`export`, and the JS parses.
@@ -25,7 +28,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import * as nodeModule from 'node:module';
+import { createRequire } from 'node:module';
 
 const CCT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const REPO = resolve(CCT_DIR, '..', '..');
@@ -54,6 +57,52 @@ function sha256(text: string): string {
   return createHash('sha256').update(text).digest('hex').slice(0, 12);
 }
 
+/**
+ * TypeScript → readable JavaScript. Types are removed; comments, line breaks and names stay.
+ * transpileModule works file by file (no type checking: `npm run typecheck` does that).
+ */
+function toReadableJs(ts_source: string): string {
+  const require = createRequire(import.meta.url);
+  let ts: typeof import('typescript');
+  try {
+    ts = require('typescript');
+  } catch {
+    throw new Error('Cannot find the "typescript" package. Run `npm install` at the repo root first.');
+  }
+  const out = ts.transpileModule(ts_source, {
+    reportDiagnostics: true,
+    compilerOptions: {
+      target: ts.ScriptTarget.ES2022,
+      module: ts.ModuleKind.ESNext,
+      removeComments: false,
+      newLine: ts.NewLineKind.LineFeed,
+    },
+  });
+  const errors = (out.diagnostics ?? []).filter((d) => d.category === ts.DiagnosticCategory.Error);
+  if (errors.length) throw new Error(errors.map((d) => ts.flattenDiagnosticMessageText(d.messageText, '\n')).join('; '));
+  return tidy(out.outputText);
+}
+
+/**
+ * Remove what is left behind when a type disappears: one-line `/** … *\/` doc comments that
+ * documented a removed type (they are followed by another comment, a blank line or the end),
+ * then collapse runs of blank lines.
+ */
+function tidy(js: string): string {
+  const lines = js.split('\n');
+  const kept: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const oneLineDoc = /^\s*\/\*\*.*\*\/\s*$/.test(line);
+    if (oneLineDoc) {
+      const next = (lines[i + 1] ?? '').trim();
+      if (next === '' || next.startsWith('//') || next.startsWith('/**')) continue;
+    }
+    kept.push(line.replace(/\s+$/, ''));
+  }
+  return kept.join('\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
+}
+
 function build(t: Target): string {
   const parts: string[] = [];
   const manifest: string[] = [];
@@ -62,14 +111,17 @@ function build(t: Target): string {
     const src = readFileSync(abs, 'utf8');
     manifest.push(` *   airtable/cct/${rel}  sha256:${sha256(src)}`);
     const body = src.replace(LOCAL_IMPORT, '').replace(EXPORT_DECL, '');
-    parts.push(`// ───── airtable/cct/${rel} ─────\n${body.trim()}\n`);
+    if (t.stripTypes) {
+      // Transpile file by file, then put the file's header comment back: the compiler drops
+      // comments that sit in front of a removed type, and that is where headers usually are.
+      const header = src.match(/^\s*(\/\*\*[\s\S]*?\*\/)/)?.[1] ?? '';
+      const js = toReadableJs(body.replace(header, ''));
+      parts.push(`// ───── airtable/cct/${rel} ─────\n${header ? header + '\n' : ''}${js}`);
+    } else {
+      parts.push(`// ───── airtable/cct/${rel} ─────\n${body.trim()}\n`);
+    }
   }
-  let code = parts.join('\n');
-  if (t.stripTypes) {
-    const strip = (nodeModule as any).stripTypeScriptTypes;
-    if (typeof strip !== 'function') throw new Error('This Node has no module.stripTypeScriptTypes (need Node 22.13+).');
-    code = strip(code, { mode: 'strip' });
-  }
+  const code = parts.join('\n');
   const header = [
     '/**',
     ` * GENERATED FILE — do not edit. Rebuild with: node airtable/cct/tools/cct-build.ts`,
