@@ -45,9 +45,9 @@ One active row. The script reads the first row with `active` = true; none or mor
 | `delegate_empty_owner_is_ceo` | `fldSgrMAML9QoBSf2` | checkbox | ✔ | Treat tasks without owner as the CEO's (decision D4) |
 | `invalid_rows_max_pct` | `fldjXNwk0KSQXo8i8` | number (integer) | 10 | Above this % of invalid open rows, the run writes nothing |
 | `notes` | `fldA2SKjXsMEmhlai` | long text | | What was decided, by whom, when |
-| `last_run_at` | `fldQkNOnM1kIMoaR1` | date-time (UTC) | Heartbeat: start of the last live run of cct-triage-compute |
-| `last_run_status` | `fldiWWUK6iQB7DGMD` | single select (`ok`, `partial`, `failed`) | Heartbeat: outcome of that run |
-| `last_run_summary` | `fld6TMgPDRAmq5FP1` | long text | Heartbeat: counts of that run |
+| `last_run_at` | `fldQkNOnM1kIMoaR1` | date-time (UTC) | | Heartbeat: start of the last live run of cct-triage-compute |
+| `last_run_status` | `fldiWWUK6iQB7DGMD` | single select (`ok`, `partial`, `failed`) | | Heartbeat: outcome of that run |
+| `last_run_summary` | `fld6TMgPDRAmq5FP1` | long text | | Heartbeat: counts of that run |
 
 The tag lists reuse Loom's fixed tag list: needs-max, waiting-on-external, client-facing, bug, approval, billing, meeting, follow-up, content, deadline-risk.
 
@@ -64,14 +64,25 @@ The tag lists reuse Loom's fixed tag list: needs-max, waiting-on-external, clien
 | `active` | `flduiUrc076re9UCr` | checkbox | Inactive rows are ignored |
 | `notes` | `fldh3fWU1lLaAVTAQ` | long text | Who confirmed the row and when |
 
-Seeded 2026-10-12 (step 2), from owners seen in `command_center_tasks` on 2026-10-12. `is_ceo`, `receives_delegation` and `domains` stay empty until Max/Andrés confirm (D3, D4):
+Seeded 2026-10-12 (step 2) from owners seen in `command_center_tasks`; completed 2026-10-13 from the Linear members list and the Airtable workspace collaborators. `receives_delegation` and `domains` stay empty for everyone until Max confirms (D3), so no delegate is suggested yet.
 
-| name | aliases | email | record |
-|---|---|---|---|
-| Sergio Góngora | Sergio Góngora · SERGIO GONGORA | | `recY34Le9SPlYbkOl` |
-| Kyle | | kyle@mapking.ai | `recOj60vJnRweFbZJ` |
-| Carlos Olivares | Carlos Olivares | colivares@singularagency.co | `recWiDSEPtHwtYfBO` (former developer; matching only, never suggested) |
-| Map King (shared) | | singular@mapking.ai | `recIj6KbCpqXdDNya` (who it represents: D4) |
+**PENDING: the final roster must be provided by Max** (who is on the team, who receives delegation and for which domains). The rows below are a working list, not confirmed by him. Anything marked "to confirm" is an assumption.
+
+| name | aliases | email | record | note |
+|---|---|---|---|---|
+| Max Hanratty | Max · Max Hanratty | max@mapking.ai | `recpRIWDCqAFuhAZs` | `is_ceo`; empty-owner tasks count as his |
+| Kyle | | kyle@mapking.ai | `recOj60vJnRweFbZJ` | |
+| Sergio Góngora | Sergio Góngora · SERGIO GONGORA · segongora9 | | `recY34Le9SPlYbkOl` | Email to confirm |
+| Washington Andrés Serrón Ifrán | | aserron@singularagency.co | `recKa86bJJZpmxJCr` | Singular |
+| Gonzalo Lucas Ranieri | | granieri@singularagency.co | `recGV5ZcJHgXZKq6S` | Singular; name to confirm |
+| William Alexis Hernández Garzón | | whernandez@singularagency.co | `reclcAeGIKOsLVYOt` | Singular |
+| Miguel Ángel Pérez Benavides | | mbenavides@singularagency.co | `recoe2mwMxr7Enqtf` | Singular |
+| Oswaldo Velasquez | | oswaldo@datamaticsoftware.com | `receZhFyUWAgBne68` | Datamatic |
+| Diego | | diego@datamaticsoftware.com | `recEFEUUUh9H0fbo5` | Datamatic; full name to confirm |
+| Carlos Olivares | Carlos Olivares | colivares@singularagency.co | `recWiDSEPtHwtYfBO` | Left the project; history only (matching only, never suggested); Airtable access deactivated |
+| Map King (shared) | | singular@mapking.ai | `recIj6KbCpqXdDNya` | Global Singular agency account (e.g. used by Hyperagent for Google Calendar). Not a person, never delegated to. Confirmed 2026-10-13 |
+
+Not loaded: `audaxias@gmail.com` (Airtable collaborator, identity unknown).
 
 ## New table `command_center_triages` (1:1 with `command_center_tasks`)
 

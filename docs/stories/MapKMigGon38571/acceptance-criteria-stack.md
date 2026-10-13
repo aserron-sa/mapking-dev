@@ -153,4 +153,4 @@ Each criterion below keeps the original order. Tags: **[Kept]** same meaning, ma
 ## Open items that change wording, not structure
 
 - **Thresholds and rules:** pending Max (D1–D3). The AC states that they are configurable; the defaults are in `implementation-plan.md`.
-- **Max's identity in the sources:** pending (D4). It affects only the delegation rule.
+- **Max's identity in the sources:** resolved 2026-10-13 (D4): Max Hanratty, `max@mapking.ai`, loaded in `team_members`. Empty-owner tasks still count as his. It affects only the delegation rule.

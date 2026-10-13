@@ -155,6 +155,7 @@ type TriageRow = {
   delegate: { eligible: boolean; reason: string | null; suggestedTo: string | null; delegatedTo: string | null };
   identity: { key: string | null; status: 'unique' | 'duplicate_candidate' | 'ambiguous' };
   ai: { category: string | null; tags: string[]; schedulable: boolean };   // shown with an "AI" marker
+  actionStatus: string;             // task_lanes.action_status: none | done | dropped | rescheduled
   laneRecordId: string | null;      // the user's task_lanes row, if any
 };
 ```
@@ -341,7 +342,7 @@ Evidence for SS ("delivery", one per criterion group) is prepared in `ss-drafts.
 ## 10. Out of scope and open items
 
 - **D1–D3 (Max):** thresholds, default-lane rules, delegation roster. Defaults in `cct_triage_configs`; changes need no code.
-- **D4 (Max / Andrés):** how Max appears in the sources. Until then, `delegate_empty_owner_is_ceo` = on.
+- **D4 (Max / Andrés):** resolved 2026-10-13 in `team_members`: Max Hanratty (`max@mapking.ai`) is the CEO row. 70 tasks have no owner, so `delegate_empty_owner_is_ceo` stays on. Max is to confirm that he also appears under other names or emails.
 - **D5 (Andrés):** the 18 test rows in `task_lanes` (Carlos / Andrés). Kept; they are per user and do not affect Max.
 - **Write-back of Done / Drop / Reschedule to the sources:** out of scope. Loom is read-only against Attio, Linear and Calendar by design; Airtable write-back semantics were never defined (see the 2026-09-17 docx).
 - **Work · Delivery tab (CC9):** a separate story.

@@ -236,7 +236,7 @@ Leyenda de responsable: **C** = Claude, **A** = Andrés (paso manual en Airtable
 | D1 | Umbrales de stale | Max | Defaults de la sección 4 |
 | D2 | Reglas de lane por defecto | Max | Defaults de la sección 4 |
 | D3 | Regla de delegación + roster (quién recibe qué dominio) | Max | Roster vacío → `delegate_eligible` se calcula pero sin sugerencia de persona |
-| D4 | **Cómo aparece Max en las fuentes** (nombre, email; hoy 70 tareas sin owner) | Max / Andrés | Owner vacío cuenta como "de Max" para delegación |
+| D4 | **Cómo aparece Max en las fuentes** (nombre, email; hoy 70 tareas sin owner) | Max / Andrés | **Resuelta 2026-10-13:** Max Hanratty (`max@mapking.ai`) cargado como `is_ceo` en `team_members`. Owner vacío sigue contando como "de Max"; Max confirma si aparece con otros nombres |
 | D5 | Limpiar las 18 filas de prueba de `task_lanes` (Carlos / Andrés) | Andrés | Se dejan; no afectan a Max (son por usuario) |
 
 ## 8. Riesgos
@@ -274,10 +274,10 @@ Leyenda de responsable: **C** = Claude, **A** = Andrés (paso manual en Airtable
 | 1 | `spec.md` + `schema.md` | Hecho | 2026-10-12 | Copia del spec en el project (`claude/spec-MapKMigGon38571.md`) y backup en Drive |
 | 2 | Esquema en Airtable | Hecho | 2026-10-12 | Aprobado por Andrés. Tablas `cct_triage_configs` (1 fila default), `team_members` (4 filas sembradas), `command_center_triages` (vacía), link inverso `triage` en `command_center_tasks`, 4 tipos de evento. IDs en `schema.md` |
 | 3 | Reglas + tests | Hecho | 2026-10-12 | `airtable/cct/cct-triage-rules.ts` + `airtable/cct/tests/cct-triage-rules.test.ts` (13 tests en verde, `node --test`). Convención: TS/TSX, prefijo `cct-`, carpetas `airtable/cct/{automations,interfaces,tests}` |
-| 4 | `cct-triage-compute.ts` + build | Hecho (código) | 2026-10-12 | `automations/cct-triage-compute.ts`, `cct-triage-sync.ts` (plan 1:1 puro), `tools/cct-build.ts` → `dist/automations/cct-triage-compute.js`. 27 tests en verde (13 reglas, 10 sync, 4 smoke sobre el JS generado con una base Airtable simulada). Falta: 3 campos heartbeat en `cct_triage_configs` (OK de Andrés) |
-| 4b | Automatización en Airtable | Pendiente (Andrés) | | |
+| 4 | `cct-triage-compute.ts` + build | Hecho (código) | 2026-10-12 | `automations/cct-triage-compute.ts`, `cct-triage-sync.ts` (plan 1:1 puro), `tools/cct-build.ts` → `dist/automations/cct-triage-compute.js`. 27 tests en verde (13 reglas, 10 sync, 4 smoke sobre el JS generado con una base Airtable simulada). Los 3 campos heartbeat de `cct_triage_configs` se crearon el 2026-10-13. Config de la automatización versionada en `automations/cct-triage-compute.config.json` |
+| 4b | Automatización en Airtable | Hecho (falta encender: Andrés) | 2026-10-13 | `command_center_triages · compute · hourly` (`wflFoOYmzWHZEcHPA`). Dry run: 837 a crear, 0 errores. Carga real: 800 + 37 creados, 1 actualizado (fila vacía → orphan), 0 fallos. Tercera corrida: 0 escrituras (idempotente). Andrés pega el script y enciende la automatización |
 | 5 | Recuperar `WorkQueuePage.tsx` | Hecho | 2026-10-12 | Export de Andrés (source_export.zip). Guardado tal cual en `airtable/cct/interfaces/WorkQueuePage.tsx` (+ `extension-template/` con package.json y style.css). Hallazgos: muestra tareas cerradas (no filtra `lifecycle`), oculta tareas de fuentes no `ok`, busca campos por nombre |
-| 6 | `cct-triage-contract.ts` + tests | Pendiente | | |
+| 6 | `cct-triage-contract.ts` + tests | Hecho | 2026-10-13 | `interfaces/cct-triage-contract.ts` + `tests/cct-triage-contract.test.ts` (35 tests; suite total 62 en verde). Puro: filas de triage (lane efectiva manual/rule/fallback, owner y dominio con procedencia), filtros con validación y `__none__`, completitud (Loom, fuentes, triage), campos requeridos, grupos de identidad |
 | 7 | UI Work · Queue | Pendiente | | |
 | 7b | Publicar extensión | Pendiente (Andrés) | | |
 | 8 | Pruebas E2E + evidencia | Pendiente | | |
