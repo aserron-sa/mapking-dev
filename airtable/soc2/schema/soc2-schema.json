@@ -1,0 +1,538 @@
+{
+  "base": "appcdpGNTo0DouoqJ (Map King Hub)",
+  "snapshot": "2026-10-14",
+  "story": "Map MigGon37539 / MapKMigGon39261 / MapKMigGon39264",
+  "note": "Schema backup of SOC 2 evidence tables, taken right after creation via the Airtable API. Source of truth is the base; refresh this file after every schema change.",
+  "tables": [
+    {
+      "id": "tblMOPSnkhTsQcANX",
+      "name": "soc2_controls",
+      "description": "SOC 2 Evidence · MapKMigGon39264 (P02), created 2026-10-14. Catalog of SOC 2 controls (AICPA TSC) that evidence event types support; mapping is provisional until Max or Scrut confirm. Writers: designated editors only. Docs: repo mapking-dev stories/MapMigGon37539/data-implementation-plan.md §1.4.",
+      "primaryFieldId": "fldKfWGKNt9OZUzvJ",
+      "fields": [
+        {
+          "id": "fldKfWGKNt9OZUzvJ",
+          "name": "control_code",
+          "type": "singleLineText",
+          "description": "Primary. TSC criterion code, e.g. CC7.2. Stable; never reused."
+        },
+        {
+          "id": "fld4UFUjVTZFh0Aox",
+          "name": "name",
+          "type": "singleLineText",
+          "description": "Control name (AICPA TSC 2017 wording, short)."
+        },
+        {
+          "id": "fldOqH3zBuiSVNmCz",
+          "name": "description",
+          "type": "multilineText",
+          "description": "What the control requires and what evidence supports it."
+        },
+        {
+          "id": "fldvjJ4aftZeuvW6l",
+          "name": "category",
+          "type": "singleSelect",
+          "description": "Evidence category used to group controls and events."
+        },
+        {
+          "id": "fldLBZ8RebcMSZGZq",
+          "name": "scrut_task",
+          "type": "singleLineText",
+          "description": "Scrut evidence task that receives this control's CSV, when known."
+        },
+        {
+          "id": "fldbCTcdOA18OMFp1",
+          "name": "recurrence",
+          "type": "singleSelect",
+          "description": "Recurrence of the Scrut evidence task; defines the CSV export period."
+        },
+        {
+          "id": "fldjk38LYTM1XHKoe",
+          "name": "active",
+          "type": "checkbox",
+          "description": "Control in use. Inactive controls drop out of the event lookups (via active_code) without rewriting evidence."
+        },
+        {
+          "id": "fldL5VBaFJig6RRCy",
+          "name": "active_code",
+          "type": "formula",
+          "description": "control_code when active, empty otherwise. Looked up from soc2_event_types to get only active controls (replaces a conditional lookup, which the API cannot create)."
+        },
+        {
+          "id": "fldQDJ14YBURGJaQs",
+          "name": "last_modified",
+          "type": "lastModifiedTime",
+          "description": "When the control definition last changed (audit of the mapping)."
+        },
+        {
+          "id": "fld3PNuylVAnGGawz",
+          "name": "last_modified_by",
+          "type": "lastModifiedBy",
+          "description": "Who last changed the control definition (audit of the mapping)."
+        },
+        {
+          "id": "fldzpPIdAlkaYcOIz",
+          "name": "event_types",
+          "type": "multipleRecordLinks",
+          "description": "Inverse of soc2_event_types.controls: event types that support this control. Edit the mapping from soc2_event_types."
+        }
+      ]
+    },
+    {
+      "id": "tbl2PJOE4M4JdcCL7",
+      "name": "soc2_event_types",
+      "description": "SOC 2 Evidence · Map MigGon37539 (structure) + MapKMigGon39261 (P01 events), created 2026-10-14. Catalog and documentation of studied events: one row per event_code. status (enabled, trace, paused, disabled) switches capture without code; detection rules live in airtable/soc2/soc2-capture.ts and must match version. Writers: designated editors only. Docs: stories/MapMigGon37539/soc2-event-catalog.md.",
+      "primaryFieldId": "fldeAXkfLta3SCJI6",
+      "fields": [
+        {
+          "id": "fldeAXkfLta3SCJI6",
+          "name": "event_code",
+          "type": "singleLineText",
+          "description": "Primary. Stable code source.object.action, e.g. loom.sync.init. Never reused."
+        },
+        {
+          "id": "fldZbVq35jhySxwH8",
+          "name": "name",
+          "type": "singleLineText",
+          "description": "Readable short name."
+        },
+        {
+          "id": "fldbFzBQ14IcbUypj",
+          "name": "description",
+          "type": "multilineText",
+          "description": "What the event is and why it is SOC 2 evidence."
+        },
+        {
+          "id": "fld7uya0FyxXiMI0i",
+          "name": "source",
+          "type": "singleSelect",
+          "description": "Producer family of the event."
+        },
+        {
+          "id": "fld8UURsZs8byhfNP",
+          "name": "source_table",
+          "type": "singleLineText",
+          "description": "Map King Hub table where the event is detected (name and id)."
+        },
+        {
+          "id": "fldahEvg0z7XDpruq",
+          "name": "source_workflow",
+          "type": "singleLineText",
+          "description": "For automation events: the source automation name and id (wfl...)."
+        },
+        {
+          "id": "fldc6u464XqJB7YCG",
+          "name": "detection",
+          "type": "multilineText",
+          "description": "Detection rule in words. Documents the rule coded in soc2-capture.ts."
+        },
+        {
+          "id": "fldkDYQGV2cHfTyTv",
+          "name": "detection_config",
+          "type": "multilineText",
+          "description": "Detection rule as JSON. Documents the coded rule; must match it."
+        },
+        {
+          "id": "fldNVamvRiCggchyb",
+          "name": "outcome",
+          "type": "singleSelect",
+          "description": "Outcome the event assigns."
+        },
+        {
+          "id": "fld6vsmEQQOn4ky0A",
+          "name": "category",
+          "type": "singleSelect",
+          "description": "SOC 2 evidence category."
+        },
+        {
+          "id": "fldSSVyKJE4PAfes2",
+          "name": "tsc_refs",
+          "type": "singleLineText",
+          "description": "Tentative TSC criteria, e.g. CC7.2 (provisional)."
+        },
+        {
+          "id": "fldRTjP2v4JrDQmOW",
+          "name": "qualifies",
+          "type": "checkbox",
+          "description": "Passed the qualification checklist (attributable, maps to a control, clear outcome, integrity)."
+        },
+        {
+          "id": "fldCzZX2H8jCAYjZG",
+          "name": "qualification_notes",
+          "type": "multilineText",
+          "description": "Why it qualifies or what it lacks."
+        },
+        {
+          "id": "fldPygZEpRVn3TyIU",
+          "name": "status",
+          "type": "singleSelect",
+          "description": "enabled: captured. trace: detected and logged in soc2_capture_runs, not written. paused: not captured for a while, no backfill. disabled: defined, not captured."
+        },
+        {
+          "id": "fldd2xXl70BziEl7u",
+          "name": "version",
+          "type": "number",
+          "description": "Version of the detection rule. Must match the version in soc2-capture.ts; a mismatch is reported as a config issue."
+        },
+        {
+          "id": "fldQhLgRNeSKwopYp",
+          "name": "mapping_provisional",
+          "type": "checkbox",
+          "description": "Control mapping not yet confirmed by Max or Scrut. Exported in the CSV."
+        },
+        {
+          "id": "fldMTmQER9AiBvIJB",
+          "name": "owner",
+          "type": "singleCollaborator",
+          "description": "Person responsible for this event definition."
+        },
+        {
+          "id": "fldbhWSBvGsvE8y0t",
+          "name": "doc_url",
+          "type": "url",
+          "description": "Documentation link."
+        },
+        {
+          "id": "fld7pY2pEmiat2Ab3",
+          "name": "controls",
+          "type": "multipleRecordLinks",
+          "description": "SOC 2 controls this event type supports (P02 mapping, by event type). Flag mapping_provisional until confirmed."
+        },
+        {
+          "id": "fldP54jgr6k3CmJwI",
+          "name": "last_modified",
+          "type": "lastModifiedTime",
+          "description": "When the event definition last changed."
+        },
+        {
+          "id": "fldbZjwtyJRkKDquT",
+          "name": "last_modified_by",
+          "type": "lastModifiedBy",
+          "description": "Who last changed the event definition."
+        },
+        {
+          "id": "fldVGPfhHiaxt72cL",
+          "name": "active_control_codes",
+          "type": "multipleLookupValues",
+          "description": "Codes of the linked controls that are active (lookup of soc2_controls.active_code; inactive ones come back empty)."
+        },
+        {
+          "id": "fldogCK6iJL2AVN6S",
+          "name": "events",
+          "type": "multipleRecordLinks",
+          "description": "Inverse of soc2_events.event_type: captured occurrences of this event type. Written only by soc2-capture."
+        }
+      ]
+    },
+    {
+      "id": "tblpmfB65pfWCnu2k",
+      "name": "soc2_capture_runs",
+      "description": "SOC 2 Evidence · Map MigGon37539, created 2026-10-14. One row per run of the soc2-capture script (record-triggered or hourly): counts, skip reasons, errors, trace detail and config issues. status running doubles as the lock for the hourly run. Writer: soc2-capture automations only. Docs: stories/MapMigGon37539/data-implementation-plan.md §1.3.",
+      "primaryFieldId": "fld9Y8cHWM9eApqlv",
+      "fields": [
+        {
+          "id": "fld9Y8cHWM9eApqlv",
+          "name": "run_id",
+          "type": "singleLineText",
+          "description": "Primary. cap-YYYYMMDD-HHMMSS-<input> (UTC start)."
+        },
+        {
+          "id": "fldusbR0AcZBcR9SW",
+          "name": "mode",
+          "type": "singleSelect",
+          "description": "record: triggered by one source row. hourly: safety net over all sources."
+        },
+        {
+          "id": "fldKA5fG5fuejjhLy",
+          "name": "trigger_table",
+          "type": "singleLineText",
+          "description": "Source table that triggered the run (record mode)."
+        },
+        {
+          "id": "fldkbBYwN7epgQaex",
+          "name": "trigger_record_id",
+          "type": "singleLineText",
+          "description": "Source record id that triggered the run (record mode)."
+        },
+        {
+          "id": "fldaaVdlldKhwrdxr",
+          "name": "status",
+          "type": "singleSelect",
+          "description": "running (lock), success, partial (some events failed), failure (run could not complete), abandoned (running too long, closed by the next run)."
+        },
+        {
+          "id": "fldKjMc0jwqxRmswU",
+          "name": "dry_run",
+          "type": "checkbox",
+          "description": "Run with dryRun = yes: evaluated everything, wrote no evidence."
+        },
+        {
+          "id": "fldKFv5R6B9xWtGam",
+          "name": "started_at",
+          "type": "dateTime",
+          "description": "Run start (UTC)."
+        },
+        {
+          "id": "fldjgi0TgQKuj2a8W",
+          "name": "finished_at",
+          "type": "dateTime",
+          "description": "Run end (UTC)."
+        },
+        {
+          "id": "fldBTpOsHdc8D0krb",
+          "name": "evaluated",
+          "type": "number",
+          "description": "Source rows evaluated."
+        },
+        {
+          "id": "fldq4ki1cBJfkCYwE",
+          "name": "captured",
+          "type": "number",
+          "description": "Events written and confirmed."
+        },
+        {
+          "id": "fldpW4GvXsFobNHHd",
+          "name": "existing",
+          "type": "number",
+          "description": "Events already captured (same event_key): no-op."
+        },
+        {
+          "id": "fldBaQcrIS8Gar26v",
+          "name": "skipped",
+          "type": "number",
+          "description": "Rows that matched no enabled event or failed validation; reasons in skip_reasons."
+        },
+        {
+          "id": "fldxwUgsgNofGPkYz",
+          "name": "traced",
+          "type": "number",
+          "description": "Events detected for types in trace status (not written)."
+        },
+        {
+          "id": "fldo2lCu7H2Cyv2Lj",
+          "name": "failed",
+          "type": "number",
+          "description": "Events whose write failed after bounded retries."
+        },
+        {
+          "id": "flduoBw6iFr2y9YFs",
+          "name": "skip_reasons",
+          "type": "multilineText",
+          "description": "JSON: reason -> count (e.g. missing_fields, test_data, status_paused)."
+        },
+        {
+          "id": "fldonwzoV4JfWmRgv",
+          "name": "trace",
+          "type": "multilineText",
+          "description": "JSON list of what trace-status events would have written (event_key, source record, outcome), capped per run."
+        },
+        {
+          "id": "fldTtBT8SCJgA2bLp",
+          "name": "errors",
+          "type": "multilineText",
+          "description": "JSON list: kind (validation, rate_limit, transient), record, short message, attempts. No payloads."
+        },
+        {
+          "id": "fldn0miE97YJP2GFT",
+          "name": "config_issues",
+          "type": "multilineText",
+          "description": "Differences between the script registry and soc2_event_types (missing rows, version mismatch, unknown codes)."
+        },
+        {
+          "id": "fld2q49lc2LYCSsY7",
+          "name": "script_version",
+          "type": "singleLineText",
+          "description": "Version of soc2-capture that ran."
+        },
+        {
+          "id": "fldoL1I0bcmE0AtMF",
+          "name": "created",
+          "type": "createdTime",
+          "description": "Server time the run row was created."
+        },
+        {
+          "id": "fldc7WVRBflD1HHXy",
+          "name": "events",
+          "type": "multipleRecordLinks",
+          "description": "Inverse of soc2_events.capture_run: events captured by this run."
+        }
+      ]
+    },
+    {
+      "id": "tblBlVgex266Mqhea",
+      "name": "soc2_events",
+      "description": "SOC 2 Evidence · Map MigGon37539, created 2026-10-14. The evidence: one row per captured occurrence of an enabled event type, idempotent on event_key, confirmed after re-read. Only ids, statuses, times, actor and counts; no task, file or report content. Writer: soc2-capture automations only; reviewers read through interfaces. Docs: stories/MapMigGon37539/data-implementation-plan.md §1.2 and soc2-event-catalog.md §4.",
+      "primaryFieldId": "fld8qK6JaKB7pFf1P",
+      "fields": [
+        {
+          "id": "fld8qK6JaKB7pFf1P",
+          "name": "event_key",
+          "type": "singleLineText",
+          "description": "Primary. event_code:source_record_id:produced_at (ISO UTC). Idempotency key: a key that already exists is a no-op, never an update."
+        },
+        {
+          "id": "fldA4jA0tdsQfzePb",
+          "name": "source_table",
+          "type": "singleLineText",
+          "description": "Source table (name and id)."
+        },
+        {
+          "id": "fldF6TYCw7iqYbqEj",
+          "name": "source_record_id",
+          "type": "singleLineText",
+          "description": "Source record id (traceability)."
+        },
+        {
+          "id": "fldapDVLiUanUU2JM",
+          "name": "source_url",
+          "type": "url",
+          "description": "Link to the source row in Map King Hub."
+        },
+        {
+          "id": "fld4WYdHwx8Vb5Iyl",
+          "name": "run_ref",
+          "type": "singleLineText",
+          "description": "The source's own id: Loom run_id, ingestion source_file, automation workflow id."
+        },
+        {
+          "id": "fldwe4JlNKFOPOWCh",
+          "name": "produced_at",
+          "type": "dateTime",
+          "description": "When the event happened according to the source (written by the producer)."
+        },
+        {
+          "id": "fld2uY8B5FOE5aUmj",
+          "name": "source_recorded_at",
+          "type": "dateTime",
+          "description": "Server time of the source row (Airtable created or last-modified time)."
+        },
+        {
+          "id": "fldLuQz2Q3xf3nlJ3",
+          "name": "actor",
+          "type": "singleLineText",
+          "description": "Who acted: agent:Loom, agent:Ingestion Agent, automation:<name>, plus the requester when known."
+        },
+        {
+          "id": "flddpEaHhEeQJGxvW",
+          "name": "trigger",
+          "type": "singleLineText",
+          "description": "How the source run started: schedule, slack:#ingestion <person>, record, hourly."
+        },
+        {
+          "id": "fld9bkv18tg1D29ph",
+          "name": "outcome",
+          "type": "singleSelect",
+          "description": "Outcome of the event."
+        },
+        {
+          "id": "fldxQX7I54qARX85W",
+          "name": "summary",
+          "type": "singleLineText",
+          "description": "One line without content: counts, short reason."
+        },
+        {
+          "id": "fldn2HwYoubz23z7h",
+          "name": "details",
+          "type": "multilineText",
+          "description": "JSON with counts and codes only. Never task text, file contents or reports."
+        },
+        {
+          "id": "fld4ihNwgp1mVKI0v",
+          "name": "ai_output_state",
+          "type": "singleSelect",
+          "description": "present, missing, malformed, not_applicable (parent criteria D4, E6). AI text is never copied."
+        },
+        {
+          "id": "fldw9ELcuRiTMt6DY",
+          "name": "confirmed",
+          "type": "checkbox",
+          "description": "Set by the capture module after re-reading the stored record. Unconfirmed rows are never shown as evidence and stay for reprocessing."
+        },
+        {
+          "id": "fld9AkZAPVhQxAkkB",
+          "name": "is_test",
+          "type": "checkbox",
+          "description": "Test data (before go-live, TEST/QA-TEST, sample files, dry runs). Kept for QA, never exported."
+        },
+        {
+          "id": "fldtecjJL5YhEX9LT",
+          "name": "integrity_hash",
+          "type": "singleLineText",
+          "description": "Optional hash of the observed fields at capture time."
+        },
+        {
+          "id": "fldsOHw8pVSl9AvEn",
+          "name": "event_type",
+          "type": "multipleRecordLinks",
+          "description": "The studied event this row is an occurrence of. Filled once, at creation."
+        },
+        {
+          "id": "fldgsg4W8Bk7jiqdR",
+          "name": "capture_run",
+          "type": "multipleRecordLinks",
+          "description": "The soc2_capture_runs row that captured this event."
+        },
+        {
+          "id": "fldYupMq4hl6VaDSx",
+          "name": "recorded_at",
+          "type": "createdTime",
+          "description": "Server time of capture. This is the evidence timestamp (exported as recorded_at, ISO UTC)."
+        },
+        {
+          "id": "fldPAfudWshafVCb3",
+          "name": "last_modified",
+          "type": "lastModifiedTime",
+          "description": "Last change to any field. Used by modified_after_capture to detect edits after capture."
+        },
+        {
+          "id": "fldxst50uGMsV1CCL",
+          "name": "event_code",
+          "type": "multipleLookupValues",
+          "description": "Lookup of the event type code (for views and the CSV)."
+        },
+        {
+          "id": "flda5MHe6els2aIB2",
+          "name": "event_name",
+          "type": "multipleLookupValues",
+          "description": "Lookup of the event type name (CSV column event_name)."
+        },
+        {
+          "id": "fldAN153VxbsRklbN",
+          "name": "category",
+          "type": "multipleLookupValues",
+          "description": "Lookup of the event type SOC 2 category."
+        },
+        {
+          "id": "flddAnPVVYeNW8th4",
+          "name": "control_codes",
+          "type": "multipleLookupValues",
+          "description": "Active SOC 2 control codes mapped to the event type (lookup of soc2_event_types.active_control_codes). Empty = unmapped evidence."
+        },
+        {
+          "id": "fldYhmYeQ0w9hEruI",
+          "name": "mapping_provisional",
+          "type": "multipleLookupValues",
+          "description": "Lookup of the event type mapping_provisional flag (CSV column)."
+        },
+        {
+          "id": "flddSQI55lmcgsq64",
+          "name": "modified_after_capture",
+          "type": "formula",
+          "description": "1 when the row changed more than 2 minutes after capture (the module's own confirmation falls inside the margin). Such rows leave the export until reviewed."
+        },
+        {
+          "id": "fldXkJCVFb3ZMqgua",
+          "name": "event_status",
+          "type": "multipleLookupValues",
+          "description": "Current status of the event type (enabled, trace, paused, disabled). Informative: what is exported depends on export_ok."
+        },
+        {
+          "id": "fldkWKTVqDo8a2oGg",
+          "name": "export_ok",
+          "type": "formula",
+          "description": "1 when the row is exportable evidence: confirmed, not test data, not modified after capture. The per-control page and the CSV show only these."
+        }
+      ]
+    }
+  ]
+}

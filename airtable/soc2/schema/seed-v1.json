@@ -1,0 +1,225 @@
+{
+  "version": 1,
+  "date": "2026-10-14",
+  "note": "Initial data for soc2_controls and soc2_event_types (phase 3). Source: stories/MapMigGon37539/soc2-event-catalog.md §5 and data-implementation-plan.md §3.",
+  "controls": [
+    {
+      "control_code": "CC7.2",
+      "name": "Monitoring of system components for anomalies",
+      "description": "The entity monitors system components and their operation for anomalies indicative of malicious acts, natural disasters and errors (AICPA TSC 2017 CC7.2). Evidence in Map King Hub: Loom sync outcomes and the hourly triage compute run. Provisional mapping by Singular.",
+      "category": "Operations & Monitoring",
+      "recurrence": "quarterly",
+      "active": true
+    },
+    {
+      "control_code": "CC7.3",
+      "name": "Evaluation of detected events",
+      "description": "The entity evaluates detected events to determine whether they could prevent it from meeting its objectives and takes action (AICPA TSC 2017 CC7.3). Evidence in Map King Hub: Loom and ingestion errors, triage compute errors and the automatic task_lanes integrity fixes. Provisional mapping by Singular.",
+      "category": "Operations & Monitoring",
+      "recurrence": "quarterly",
+      "active": true
+    },
+    {
+      "control_code": "PI1.2",
+      "name": "Controls over system inputs",
+      "description": "The entity implements policies and procedures over system inputs, including controls over completeness and accuracy (AICPA TSC 2017 PI1.2). Evidence in Map King Hub: Ingestion Agent runs with row-level validation. Provisional mapping by Singular.",
+      "category": "Operations & Monitoring",
+      "recurrence": "quarterly",
+      "active": true
+    }
+  ],
+  "event_types": [
+    {
+      "event_code": "loom.sync.init",
+      "name": "Loom sync started",
+      "description": "Loom started a sync run, scheduled or requested in Slack #ingestion. Evidence that task aggregation runs as planned and who requested it.",
+      "source": "loom",
+      "source_table": "loom_sync_runs (tblLnaOIEzNbIWp9S)",
+      "source_workflow": "",
+      "detection": "A loom_sync_runs row is created with status running.",
+      "detection_config": "{\"table\": \"tblLnaOIEzNbIWp9S\", \"on\": \"create\", \"status_field\": \"status\", \"status_in\": [\"running\"], \"produced_at\": \"started_at\", \"run_ref\": \"run_id\"}",
+      "outcome": "started",
+      "category": "Operations & Monitoring",
+      "tsc_refs": "CC7.2",
+      "qualifies": true,
+      "qualification_notes": "Attributable (agent:Loom plus requester), clear state. Loom updates its row later, so values are copied at capture.",
+      "status": "trace",
+      "version": 1,
+      "mapping_provisional": true,
+      "controls": [
+        "CC7.2"
+      ]
+    },
+    {
+      "event_code": "loom.sync.completed",
+      "name": "Loom sync completed",
+      "description": "A Loom sync finished with success or partial success, with created, updated, closed, skipped and failed counts.",
+      "source": "loom",
+      "source_table": "loom_sync_runs (tblLnaOIEzNbIWp9S)",
+      "source_workflow": "",
+      "detection": "The status of a loom_sync_runs row changes to success or partial.",
+      "detection_config": "{\"table\": \"tblLnaOIEzNbIWp9S\", \"on\": \"status_change\", \"status_field\": \"status\", \"status_in\": [\"success\", \"partial\"], \"produced_at\": \"finished_at\", \"run_ref\": \"run_id\", \"outcome_map\": {\"success\": \"success\", \"partial\": \"partial\"}, \"ai_output_state\": \"present, or missing when enrichment_fallbacks > 0\"}",
+      "outcome": "success",
+      "category": "Operations & Monitoring",
+      "tsc_refs": "CC7.2",
+      "qualifies": true,
+      "qualification_notes": "Attributable, clear outcome with counts. Values copied at capture.",
+      "status": "trace",
+      "version": 1,
+      "mapping_provisional": true,
+      "controls": [
+        "CC7.2"
+      ]
+    },
+    {
+      "event_code": "loom.sync.error",
+      "name": "Loom sync failed",
+      "description": "A Loom sync failed, or was abandoned: killed before closing its row and marked by the next run.",
+      "source": "loom",
+      "source_table": "loom_sync_runs (tblLnaOIEzNbIWp9S)",
+      "source_workflow": "",
+      "detection": "The status of a loom_sync_runs row changes to failure or abandoned.",
+      "detection_config": "{\"table\": \"tblLnaOIEzNbIWp9S\", \"on\": \"status_change\", \"status_field\": \"status\", \"status_in\": [\"failure\", \"abandoned\"], \"produced_at\": \"finished_at\", \"run_ref\": \"run_id\", \"outcome_map\": {\"failure\": \"failure\", \"abandoned\": \"abandoned\"}}",
+      "outcome": "failure",
+      "category": "Operations & Monitoring",
+      "tsc_refs": "CC7.2, CC7.3",
+      "qualifies": true,
+      "qualification_notes": "For abandoned runs produced_at is the time the next run marked it, not the time it stopped.",
+      "status": "trace",
+      "version": 1,
+      "mapping_provisional": true,
+      "controls": [
+        "CC7.2",
+        "CC7.3"
+      ]
+    },
+    {
+      "event_code": "ingestion.run.init",
+      "name": "Ingestion run started",
+      "description": "The Ingestion Agent started processing a file. Not observable today: the agent writes ingestion_runs only when it finishes.",
+      "source": "ingestion",
+      "source_table": "ingestion_runs (tbl2EiVoOt6fEAId6)",
+      "source_workflow": "",
+      "detection": "Not available: needs the agent to create its ingestion_runs row with status running when it starts.",
+      "detection_config": "{\"table\": \"tbl2EiVoOt6fEAId6\", \"on\": \"create\", \"status_field\": \"run_status\", \"status_in\": [\"running\"], \"note\": \"requires a producer change\"}",
+      "outcome": "started",
+      "category": "Operations & Monitoring",
+      "tsc_refs": "PI1.2",
+      "qualifies": false,
+      "qualification_notes": "Not observable until the Ingestion Agent logs its start.",
+      "status": "disabled",
+      "version": 1,
+      "mapping_provisional": true,
+      "controls": [
+        "PI1.2"
+      ]
+    },
+    {
+      "event_code": "ingestion.run.completed",
+      "name": "Ingestion run completed",
+      "description": "The Ingestion Agent processed a file: rows validated and staged. Completed with errors means some rows were invalid or malformed.",
+      "source": "ingestion",
+      "source_table": "ingestion_runs (tbl2EiVoOt6fEAId6)",
+      "source_workflow": "",
+      "detection": "An ingestion_runs row is created or replaced with run_status Completed or Completed with errors.",
+      "detection_config": "{\"table\": \"tbl2EiVoOt6fEAId6\", \"on\": \"create_or_update\", \"status_field\": \"run_status\", \"status_in\": [\"Completed\", \"Completed with errors\"], \"produced_at\": \"run_at\", \"run_ref\": \"source_file\", \"outcome_map\": {\"Completed\": \"success\", \"Completed with errors\": \"partial\"}, \"ai_output_state\": \"not_applicable\"}",
+      "outcome": "success",
+      "category": "Operations & Monitoring",
+      "tsc_refs": "PI1.2",
+      "qualifies": true,
+      "qualification_notes": "run_by is free text (weak actor). Replace mode updates the row in place: event_key includes run_at, so a replacement is a new event.",
+      "status": "trace",
+      "version": 1,
+      "mapping_provisional": true,
+      "controls": [
+        "PI1.2"
+      ]
+    },
+    {
+      "event_code": "ingestion.run.error",
+      "name": "Ingestion run failed",
+      "description": "The Ingestion Agent could not write the file's rows to staging (run_status Failed).",
+      "source": "ingestion",
+      "source_table": "ingestion_runs (tbl2EiVoOt6fEAId6)",
+      "source_workflow": "",
+      "detection": "An ingestion_runs row has run_status Failed.",
+      "detection_config": "{\"table\": \"tbl2EiVoOt6fEAId6\", \"on\": \"create_or_update\", \"status_field\": \"run_status\", \"status_in\": [\"Failed\"], \"produced_at\": \"run_at\", \"run_ref\": \"source_file\", \"outcome_map\": {\"Failed\": \"failure\"}, \"ai_output_state\": \"not_applicable\"}",
+      "outcome": "failure",
+      "category": "Operations & Monitoring",
+      "tsc_refs": "PI1.2, CC7.3",
+      "qualifies": true,
+      "qualification_notes": "Only covers failures the agent logs; a crash before writing leaves no row.",
+      "status": "trace",
+      "version": 1,
+      "mapping_provisional": true,
+      "controls": [
+        "PI1.2",
+        "CC7.3"
+      ]
+    },
+    {
+      "event_code": "automation.triage_compute.completed",
+      "name": "Triage compute run completed",
+      "description": "The hourly command_center_triages compute automation ran and logged status ok in priority_events.",
+      "source": "automation",
+      "source_table": "priority_events (tbl0k4YFnduwhMJG2)",
+      "source_workflow": "command_center_triages · compute · hourly (wflFoOYmzWHZEcHPA)",
+      "detection": "A priority_events row is created with source automation, event_type triage_compute and status ok. Dry runs (summary starting with [dry run]) are excluded.",
+      "detection_config": "{\"table\": \"tbl0k4YFnduwhMJG2\", \"on\": \"create\", \"match\": {\"source\": \"automation\", \"event_type\": \"triage_compute\", \"status\": \"ok\"}, \"exclude_summary_prefix\": \"[dry run]\", \"produced_at\": \"created_at\", \"ai_output_state\": \"not_applicable\"}",
+      "outcome": "success",
+      "category": "Operations & Monitoring",
+      "tsc_refs": "CC7.2",
+      "qualifies": true,
+      "qualification_notes": "Server timestamp, never deleted. Hourly volume (about 24 per day): decide every run or a daily summary before enabling.",
+      "status": "trace",
+      "version": 1,
+      "mapping_provisional": true,
+      "controls": [
+        "CC7.2"
+      ]
+    },
+    {
+      "event_code": "automation.triage_compute.error",
+      "name": "Triage compute run failed",
+      "description": "The hourly triage compute automation logged a status other than ok (validation or dependency failure).",
+      "source": "automation",
+      "source_table": "priority_events (tbl0k4YFnduwhMJG2)",
+      "source_workflow": "command_center_triages · compute · hourly (wflFoOYmzWHZEcHPA)",
+      "detection": "A priority_events row is created with source automation, event_type triage_compute and status other than ok. Dry runs excluded.",
+      "detection_config": "{\"table\": \"tbl0k4YFnduwhMJG2\", \"on\": \"create\", \"match\": {\"source\": \"automation\", \"event_type\": \"triage_compute\", \"status_not\": \"ok\"}, \"exclude_summary_prefix\": \"[dry run]\", \"produced_at\": \"created_at\", \"ai_output_state\": \"not_applicable\"}",
+      "outcome": "failure",
+      "category": "Operations & Monitoring",
+      "tsc_refs": "CC7.2, CC7.3",
+      "qualifies": true,
+      "qualification_notes": "Server timestamp, never deleted.",
+      "status": "trace",
+      "version": 1,
+      "mapping_provisional": true,
+      "controls": [
+        "CC7.2",
+        "CC7.3"
+      ]
+    },
+    {
+      "event_code": "automation.lanes_integrity.fixed",
+      "name": "Task lanes integrity fix",
+      "description": "The task_lanes integrity automations detected and corrected an invalid state (duplicate rows or broken ranking) and logged it.",
+      "source": "automation",
+      "source_table": "priority_events (tbl0k4YFnduwhMJG2)",
+      "source_workflow": "task_lanes · integrity · on create / on update (wflzX39Z0Wl4xQLel, wflvV2l7S9rBYzVFS)",
+      "detection": "A priority_events row is created with source automation and event_type guard_fix or dedupe.",
+      "detection_config": "{\"table\": \"tbl0k4YFnduwhMJG2\", \"on\": \"create\", \"match\": {\"source\": \"automation\", \"event_type_in\": [\"guard_fix\", \"dedupe\"]}, \"produced_at\": \"created_at\", \"ai_output_state\": \"not_applicable\"}",
+      "outcome": "fixed",
+      "category": "Operations & Monitoring",
+      "tsc_refs": "CC7.3",
+      "qualifies": true,
+      "qualification_notes": "Best control evidence of the set: detection and correction of invalid states, logged with server time.",
+      "status": "trace",
+      "version": 1,
+      "mapping_provisional": true,
+      "controls": [
+        "CC7.3"
+      ]
+    }
+  ]
+}
