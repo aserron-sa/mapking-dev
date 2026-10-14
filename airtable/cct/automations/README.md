@@ -37,7 +37,7 @@ The Today extension validates before writing (it rejects a 4th fire without a de
 
 # cct-triage-compute — MapKMigGon38571
 
-Hourly automation that fills `command_center_triages` (one row per task, 1:1 with `command_center_tasks`): owner canonical, suggested lane, stale state, delegation eligibility and cross-source identity. Rules: `docs/stories/MapKMigGon38571/spec.md` §4. Schema and IDs: `docs/stories/MapKMigGon38571/schema.md`.
+Hourly automation that fills `command_center_triages` (one row per task, 1:1 with `command_center_tasks`): owner canonical, suggested lane, stale state, delegation eligibility and cross-source identity. Rules: `stories/MapKMigGon38571/spec.md` §4. Schema and IDs: `stories/MapKMigGon38571/schema.md`.
 
 | File | Role |
 |---|---|

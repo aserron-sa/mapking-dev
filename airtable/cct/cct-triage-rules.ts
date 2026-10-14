@@ -7,7 +7,7 @@
  *   - airtable/cct/interfaces/WorkQueuePage.tsx        (custom interface component; inlined by the build)
  *   - airtable/cct/tests/cct-triage-rules.test.ts      (node --test)
  *
- * Rules are specified in docs/stories/MapKMigGon38571/spec.md §4. Keep both in sync.
+ * Rules are specified in stories/MapKMigGon38571/spec.md §4. Keep both in sync.
  *
  * Syntax note: only "erasable" TypeScript (types, interfaces, `as`, `type` imports).
  * No enums, namespaces or parameter properties, so Node 22 can run it directly and

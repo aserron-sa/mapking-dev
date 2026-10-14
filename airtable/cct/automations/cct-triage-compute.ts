@@ -28,7 +28,7 @@
  * Writes ONLY: command_center_triages (all fields), priority_events (its own events),
  * cct_triage_configs heartbeat fields. Never writes command_center_tasks (Loom's table) or task_lanes.
  *
- * Rules: docs/stories/MapKMigGon38571/spec.md §4 · Schema and IDs: docs/stories/MapKMigGon38571/schema.md
+ * Rules: stories/MapKMigGon38571/spec.md §4 · Schema and IDs: stories/MapKMigGon38571/schema.md
  */
 import { DOMAINS, dateInZone, validateConfig } from '../cct-triage-rules.ts';
 import type { Issue, TaskInput, TeamMember, TriageConfig } from '../cct-triage-rules.ts';
@@ -426,7 +426,7 @@ async function main() {
     ...missingFields(CCT.approvals.table, [CCT.approvals.linkedInvoice, CCT.approvals.linkedFollowUp]),
   ];
   if (missing.length) {
-    const msg = `Missing or renamed fields: ${missing.join(', ')}. Nothing written. Check docs/stories/MapKMigGon38571/schema.md.`;
+    const msg = `Missing or renamed fields: ${missing.join(', ')}. Nothing written. Check stories/MapKMigGon38571/schema.md.`;
     await logEvent('triage_data_issue', 'validation_failed', 'triage · required fields missing', msg, dryRun);
     output.set('result', 'validation_failed');
     output.set('message', msg);
