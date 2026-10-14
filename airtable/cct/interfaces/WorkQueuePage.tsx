@@ -31,7 +31,7 @@
  * The page writes only to task_lanes (per user) and priority_events, never to
  * command_center_tasks or command_center_triages.
  *
- * Docs: docs/stories/MapKMigGon38571/{spec,schema,implementation-plan}.md
+ * Docs: stories/MapKMigGon38571/{spec,schema,implementation-plan}.md
  * Fields the page needs must be visible in the page's Data panel (step 7b).
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -72,7 +72,7 @@ import type {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Ids (tables and fields by ID, never by name: a rename does not break the page)
-// Source of truth: docs/stories/MapKMigGon38571/schema.md
+// Source of truth: stories/MapKMigGon38571/schema.md
 // ─────────────────────────────────────────────────────────────────────────────
 
 const IDS = {
@@ -898,7 +898,7 @@ function WorkQueue(props: {
             <div className="min-h-screen bg-black text-white p-6">
                 <Banner
                     title="Work · Queue cannot show a complete list: some fields are not available to this page."
-                    lines={[...missingFields, 'Expose them in the page Data panel (see docs/stories/MapKMigGon38571/schema.md).']}
+                    lines={[...missingFields, 'Expose them in the page Data panel (see stories/MapKMigGon38571/schema.md).']}
                     color={RED}
                 />
             </div>
