@@ -1,0 +1,327 @@
+{
+  "schema": 1,
+  "nodes": [
+    {
+      "id": "agent:ingestion-agent",
+      "type": "agent",
+      "title": "Ingestion Agent",
+      "summary": "Hyperagent agent triggered from Slack that ingests content into Map King Hub; will log each finished run to activity_runs.",
+      "status": "existing",
+      "tags": [
+        "ingestion"
+      ],
+      "path": "data/agents/ingestion-agent.md",
+      "hash": "576cd25fb861",
+      "out": [],
+      "in": [
+        "populated_by<table:activity_runs",
+        "writer<table:activity_runs"
+      ]
+    },
+    {
+      "id": "agent:loom",
+      "type": "agent",
+      "title": "Loom",
+      "summary": "Hyperagent agent that syncs work sources into Map King Hub; runs each morning and on demand from the panel or Slack.",
+      "status": "existing",
+      "tags": [
+        "loom",
+        "sync"
+      ],
+      "path": "data/agents/loom.md",
+      "hash": "270fbf4f7200",
+      "out": [],
+      "in": [
+        "writer<table:loom_sync_runs"
+      ]
+    },
+    {
+      "id": "automation:evidence-module",
+      "type": "automation",
+      "title": "evidence module",
+      "summary": "Shared module that validates, normalizes and writes evidence records and confirms the write; used by every entry automation.",
+      "status": "planned",
+      "tags": [
+        "soc2",
+        "evidence"
+      ],
+      "path": "data/automations/evidence-module.md",
+      "hash": "baab11e6e6b1",
+      "out": [
+        "produced_by>story:MapMigGon37539"
+      ],
+      "in": [
+        "consumes<story:MapKMigGon39261",
+        "writer<table:evidence"
+      ]
+    },
+    {
+      "id": "automation:evidence-run-capture",
+      "type": "automation",
+      "title": "evidence run capture",
+      "summary": "Record-triggered automation on terminal run rows plus an hourly safety net, with one adapter per source type.",
+      "status": "planned",
+      "tags": [
+        "soc2",
+        "evidence"
+      ],
+      "path": "data/automations/evidence-run-capture.md",
+      "hash": "5e003314aed2",
+      "out": [
+        "produced_by>story:MapKMigGon39261"
+      ],
+      "in": [
+        "populated_by<table:evidence"
+      ]
+    },
+    {
+      "id": "decision:2026-10-14-points-and-sprint-order",
+      "type": "decision",
+      "title": "Points total and sprint order for the SOC 2 split",
+      "summary": "Open for the PM: total is 15 SP not 13 (4 is off the Fibonacci scale), and 39261 and 39264 sit in sprint 4 while their prerequisite 37539 sits in sprint 5.",
+      "status": "open",
+      "tags": [],
+      "path": "decisions/2026-10-14-points-and-sprint-order.md",
+      "hash": "f8f5b03d1cf1",
+      "out": [],
+      "in": []
+    },
+    {
+      "id": "epic:soc2-evidence",
+      "type": "epic",
+      "title": "SOC 2 Evidence",
+      "summary": "Key Project that makes agent and automation activity produce audit-ready evidence, organized by SOC 2 control, for Scrut. Release v1.",
+      "status": "open",
+      "tags": [
+        "soc2",
+        "evidence",
+        "scrut"
+      ],
+      "path": "epics/soc2-evidence.md",
+      "hash": "049d8f14923d",
+      "out": [],
+      "in": [
+        "epic<story:MapKMigGon39261",
+        "epic<story:MapKMigGon39264",
+        "epic<story:MapMigGon37539"
+      ]
+    },
+    {
+      "id": "glossary",
+      "type": "glossary",
+      "title": "Glossary and banned words",
+      "summary": "Terms used across Map King stories and the words to replace with real components.",
+      "status": null,
+      "tags": [],
+      "path": "glossary.md",
+      "hash": "d7de12faa013",
+      "out": [],
+      "in": []
+    },
+    {
+      "id": "interface:per-control-evidence",
+      "type": "interface",
+      "title": "per-control evidence page",
+      "summary": "Airtable interface list of confirmed evidence filtered by SOC 2 control, with CSV download of the export columns only.",
+      "status": "planned",
+      "tags": [
+        "soc2",
+        "interface",
+        "csv"
+      ],
+      "path": "data/interfaces/per-control-evidence.md",
+      "hash": "76ab32765357",
+      "out": [
+        "produced_by>story:MapKMigGon39264"
+      ],
+      "in": []
+    },
+    {
+      "id": "project",
+      "type": "project",
+      "title": "Map King (Map.ai)",
+      "summary": "AI operating layer for Map King: Hyperagent agents on Airtable (Map King Hub) that take the founder out of daily operations.",
+      "status": null,
+      "tags": [],
+      "path": "project.md",
+      "hash": "d2caddfef5b5",
+      "out": [],
+      "in": []
+    },
+    {
+      "id": "source:map-king-hub",
+      "type": "source",
+      "title": "Map King Hub (Airtable base)",
+      "summary": "The Airtable base appcdpGNTo0DouoqJ that holds all tables, automations and interfaces for Map King.",
+      "status": "existing",
+      "tags": [
+        "airtable",
+        "base"
+      ],
+      "path": "data/sources/map-king-hub.md",
+      "hash": "c1089fa28223",
+      "out": [],
+      "in": []
+    },
+    {
+      "id": "story:MapKMigGon39261",
+      "type": "story",
+      "title": "P01 - SOC 2 evidence source coverage",
+      "summary": "Run logs and adapters so Loom, Ingestion Agent, automations and ticket reviews produce evidence through triggered capture plus an hourly safety net.",
+      "status": "planned",
+      "tags": [
+        "soc2",
+        "evidence",
+        "ingestion"
+      ],
+      "path": "stories/MapKMigGon39261.md",
+      "hash": "9a7d7f9da785",
+      "out": [
+        "consumes>automation:evidence-module",
+        "consumes>table:evidence",
+        "consumes>table:loom_sync_runs",
+        "depends_on>story:MapMigGon37539",
+        "epic>epic:soc2-evidence",
+        "parent>story:MapMigGon37539"
+      ],
+      "in": [
+        "depends_on<story:MapKMigGon39264",
+        "produced_by<automation:evidence-run-capture",
+        "produced_by<table:activity_runs"
+      ]
+    },
+    {
+      "id": "story:MapKMigGon39264",
+      "type": "story",
+      "title": "P02 - SOC 2 evidence by control, ready for Scrut",
+      "summary": "Airtable-only control mapping, per-control interface and CSV export of confirmed evidence. No scripts or automations.",
+      "status": "planned",
+      "tags": [
+        "soc2",
+        "evidence",
+        "interface",
+        "csv"
+      ],
+      "path": "stories/MapKMigGon39264.md",
+      "hash": "2c29b99855d5",
+      "out": [
+        "consumes>table:evidence",
+        "consumes>table:evidence",
+        "consumes>table:evidence",
+        "consumes>table:soc2_control_mappings",
+        "depends_on>story:MapKMigGon39261",
+        "depends_on>story:MapMigGon37539",
+        "epic>epic:soc2-evidence",
+        "parent>story:MapMigGon37539"
+      ],
+      "in": [
+        "produced_by<interface:per-control-evidence"
+      ]
+    },
+    {
+      "id": "story:MapMigGon37539",
+      "type": "story",
+      "title": "Map MigGon37539 - SOC 2 evidence capture (parent)",
+      "summary": "Original story. Evidence table, evidence module, approvals capture and run-status logging. Split into P01 (39261) and P02 (39264).",
+      "status": "existing",
+      "tags": [
+        "soc2",
+        "evidence"
+      ],
+      "path": "stories/MapMigGon37539.md",
+      "hash": "298b048fc6d4",
+      "out": [
+        "epic>epic:soc2-evidence"
+      ],
+      "in": [
+        "depends_on<story:MapKMigGon39261",
+        "depends_on<story:MapKMigGon39264",
+        "parent<story:MapKMigGon39261",
+        "parent<story:MapKMigGon39264",
+        "produced_by<automation:evidence-module",
+        "produced_by<table:evidence",
+        "produced_by<table:soc2_control_mappings"
+      ]
+    },
+    {
+      "id": "table:activity_runs",
+      "type": "table",
+      "title": "activity_runs",
+      "summary": "New append-only run log for the Ingestion Agent, qualifying automations and the ticket review flow, one row per finished run.",
+      "status": "planned",
+      "tags": [
+        "run-log"
+      ],
+      "path": "data/tables/activity_runs.md",
+      "hash": "7f2628052a05",
+      "out": [
+        "populated_by>agent:ingestion-agent",
+        "produced_by>story:MapKMigGon39261",
+        "writer>agent:ingestion-agent"
+      ],
+      "in": []
+    },
+    {
+      "id": "table:evidence",
+      "type": "table",
+      "title": "evidence",
+      "summary": "One record per qualifying run or approval, created once by the evidence module and traceable to its source row.",
+      "status": "planned",
+      "tags": [
+        "soc2",
+        "evidence"
+      ],
+      "path": "data/tables/evidence.md",
+      "hash": "484a3d354481",
+      "out": [
+        "populated_by>automation:evidence-run-capture",
+        "produced_by>story:MapMigGon37539",
+        "writer>automation:evidence-module"
+      ],
+      "in": [
+        "consumes<story:MapKMigGon39261",
+        "consumes<story:MapKMigGon39264",
+        "consumes<story:MapKMigGon39264",
+        "consumes<story:MapKMigGon39264"
+      ]
+    },
+    {
+      "id": "table:loom_sync_runs",
+      "type": "table",
+      "title": "loom_sync_runs",
+      "summary": "Existing run log written only by Loom, one row per sync run with status, trigger, timestamps and counts.",
+      "status": "existing",
+      "tags": [
+        "run-log",
+        "loom"
+      ],
+      "path": "data/tables/loom_sync_runs.md",
+      "hash": "ca5f5dde39cc",
+      "out": [
+        "writer>agent:loom"
+      ],
+      "in": [
+        "consumes<story:MapKMigGon39261"
+      ]
+    },
+    {
+      "id": "table:soc2_control_mappings",
+      "type": "table",
+      "title": "soc2_control_mappings",
+      "summary": "One row per evidence source type with its SOC 2 controls and a provisional flag; the table evidence.source_type links to.",
+      "status": "planned",
+      "tags": [
+        "soc2",
+        "mapping"
+      ],
+      "path": "data/tables/soc2_control_mappings.md",
+      "hash": "363b5b713698",
+      "out": [
+        "produced_by>story:MapMigGon37539"
+      ],
+      "in": [
+        "consumes<story:MapKMigGon39264"
+      ]
+    }
+  ]
+}
