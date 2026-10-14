@@ -108,7 +108,7 @@ Resueltas: la forma del backend (Airtable + Hyperagent, sin servicio aparte) y e
 | # | Paso | Estimación |
 |---|---|---|
 | 1 | Enviar decisiones 1–4 a Max en #map-king_agile con defaults propuestos | 0,5 h |
-| 2 | Spec `docs/stories/MapKMigGon38571/spec.md` (+ copia en el project): lectura del AC, modelo de datos, reglas, trazabilidad, plan de pruebas | 3 h |
+| 2 | Spec `stories/MapKMigGon38571/spec.md` (+ copia en el project): lectura del AC, modelo de datos, reglas, trazabilidad, plan de pruebas | 3 h |
 | 3 | Esquema (solo campos nuevos): tabla `triage_config`; en `command_center_tasks` `stale_state` (stale / fresh / unknown), `stale_reason`, `delegate_eligible`, `delegate_reason`, `owner_canonical`, `domain_effective`; en `task_lanes` `lane_basis` | 4 h |
 | 4 | Lane efectiva: script de automatización `triage-default-lane.js` (lane por regla para tareas sin fila manual, respeta on_fire de 38570); correcciones y datos inválidos a `priority_events` | 4 h |
 | 5 | Recuperar `WorkQueuePage.tsx` al repo | 1 h |

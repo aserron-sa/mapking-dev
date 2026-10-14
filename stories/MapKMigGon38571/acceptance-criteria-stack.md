@@ -46,7 +46,7 @@ Each criterion below keeps the original order. Tags: **[Kept]** same meaning, ma
    - **`cct-triage-compute.ts`** checks its fields and config before writing. If something is missing, it stops and logs `triage_data_issue`.
 3. **[Reinterpreted]** No new AI is used to infer metadata. The existing AI values from Loom (`category`, `tags`, `schedulable`) are shown in Work · Queue with an "AI" marker, separate from source values (title, status, owner, due date, link) and from the user's overrides.
 4. **[Reinterpreted]** AI values never overwrite source values: Loom writes AI output only to its own AI fields. User decisions (lane, domain or owner override, delegation) are stored only in `task_lanes`, never in `command_center_tasks`, so a Loom sync cannot overwrite them and they never overwrite source data.
-5. **[Reinterpreted]** The stable contract is documented in `docs/stories/MapKMigGon38571/schema.md`:
+5. **[Reinterpreted]** The stable contract is documented in `stories/MapKMigGon38571/schema.md`:
    - field IDs and allowed values for domain, owner, source, lane, `stale_state`, `delegate_*` and `identity_*`;
    - the triage row shape produced by `cct-triage-contract.ts`.
 

@@ -1,3 +1,7 @@
+---
+points: 4
+---
+
 # Story MapKMigGon38571
 
 URL : https://ss-prod-web-internal-804852907406.us-central1.run.app/workflow/52b318c6-34f7-40e7-a1b9-2b374e664ef3

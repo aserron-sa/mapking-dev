@@ -187,7 +187,7 @@ Leyenda de responsable: **C** = Claude, **A** = Andrés (paso manual en Airtable
 | # | Paso | Resp. | Entregable | Est. |
 |---|---|---|---|---|
 | 0 | Aprobación del plan. Claude prepara los textos (comentario SS, mensaje a Max); Andrés los revisa y publica | C + A | Textos en chat / `ss-drafts.md` | 0,5 h |
-| 1 | `spec.md` + `schema.md` de la story (AC sobre el stack, modelo, reglas, errores, trazabilidad, plan de pruebas). Copia en el project y backup en Drive | C | `docs/stories/MapKMigGon38571/spec.md`, `schema.md` | 2,5 h |
+| 1 | `spec.md` + `schema.md` de la story (AC sobre el stack, modelo, reglas, errores, trazabilidad, plan de pruebas). Copia en el project y backup en Drive | C | `stories/MapKMigGon38571/spec.md`, `schema.md` | 2,5 h |
 | 2 | Esquema en Airtable vía MCP: `cct_triage_configs` (1 fila con defaults), `team_members` (sembrada con los owners vistos, sin `is_ceo` hasta que confirmes quién es Max en las fuentes), tabla `command_center_triages` (15 campos, link 1:1 a `command_center_tasks`), 4 tipos de evento. **Te aviso antes de ejecutar** | C | Esquema + IDs en `schema.md` | 1,5 h |
 | 3 | `airtable/cct/cct-triage-rules.ts` (puro) + `airtable/cct/tests/cct-triage-rules.test.ts` (`node --test`): lanes, stale, delegate, owner, identidad, bordes (nulls, fechas inválidas, config faltante) | C | Lib + tests en verde | 4 h |
 | 4 | `airtable/cct/automations/cct-triage-compute.ts` (inlinea la lib con `airtable/cct/tools/cct-build.ts`), modo `dryRun`, upsert 1:1 en `command_center_triages` (crear, actualizar, cerradas, huérfanas, control de duplicados), escritura solo de cambios en lotes de 50, log a `priority_events` | C | Script + `dist/` para pegar | 2,5 h |
