@@ -30,6 +30,7 @@ Campos comunes de ambas (igual que la 37539): proyecto Map King Discovery & Foun
 
 ## Acceptance Criteria
 
+
 Scenario: Finished Loom runs produce evidence
    Given Loom writes its run to loom_sync_runs
    When the row reaches a terminal status (success, partial, failure or abandoned)
@@ -37,11 +38,13 @@ Scenario: Finished Loom runs produce evidence
    And one evidence record is created with source type "loom", run_id, status, trigger, started_at, finished_at and the created/updated/closed/failed counts
    And the record links back to the loom_sync_runs row
 
+
 Scenario: Loom runs still in progress are not evidenced yet
    Given a loom_sync_runs row with status "running"
    When an evidence automation evaluates it
    Then no evidence is created for that run
    And it is evidenced once its status becomes terminal
+
 
 Scenario: Ingestion Agent runs produce evidence
    Given the Ingestion Agent writes one row to activity_runs with source_type "ingestion" when a run finishes
@@ -51,11 +54,13 @@ Scenario: Ingestion Agent runs produce evidence
    And one evidence record is created with source type "ingestion", run_id, status, trigger, started_at, finished_at, counts and AI output state
    And the record links back to the activity_runs row
 
+
 Scenario: Automation runs produce evidence
    Given a qualifying automation writes one row to activity_runs with source_type "automation" when it finishes
    When the row is created
    Then the evidence automation is triggered for that row
    And one evidence record is created with source type "automation", automation name, run_id, status, timestamps and outcome
+
 
 Scenario: Ticket reviews produce evidence
    Given the ticket review flow writes one row to activity_runs with source_type "ticket_review" when a review is completed
@@ -63,11 +68,13 @@ Scenario: Ticket reviews produce evidence
    Then the evidence automation is triggered for that row
    And one evidence record is created with the review outcome, reviewer, timestamps and the ticket id (no ticket content)
 
+
 Scenario: Non-qualifying runs are skipped with a reason
    Given a run row that does not match its source type's qualifying rule (for example a loom_sync_runs row with status "rejected_busy")
    When an evidence automation evaluates it
    Then no evidence is created
    And the evidence run log records the row as skipped with the rule that excluded it
+
 
 ## Technical Implementation
 
@@ -93,11 +100,13 @@ Scenario: Non-qualifying runs are skipped with a reason
 
 ## Edge Cases & Error Handling
 
+
 Scenario: AI output missing
    Given a qualifying run row with valid core metadata and no AI output
    When the evidence automation processes it
    Then the evidence record is created from the observed metadata
    And its AI output state is "missing"
+
 
 Scenario: AI output malformed
    Given a qualifying run row with valid core metadata and unparseable AI output
@@ -105,11 +114,13 @@ Scenario: AI output malformed
    Then the evidence record is created without the invalid AI fields
    And its AI output state is "malformed" and the parse error is logged
 
+
 Scenario: Required core metadata missing
    Given a run row without run_id, source_type, finished_at or status
    When the adapter evaluates it
    Then no evidence is created
    And the evidence run log records a validation failure listing the missing fields
+
 
 Scenario: Evidence write rejected or failing
    Given a qualifying run row
@@ -117,26 +128,31 @@ Scenario: Evidence write rejected or failing
    Then the run is not recorded as evidenced
    And the evidence run log records a terminal failure with the rejection details, available for reprocessing
 
+
 Scenario: Triggered capture fails and is recovered
    Given a terminal run row without evidence because the triggered automation failed or did not fire
    When the hourly evidence automation runs
    Then the evidence record is created once, using the same idempotency key
+
 
 Scenario: Triggered and hourly automations process the same run
    Given the triggered and the hourly evidence automation pick up the same run row
    When both evaluate it
    Then only one evidence record exists for that run and it is not modified by the second
 
+
 Scenario: Producer logs the same run twice
    Given two activity_runs rows with the same source_type and run_id
    When the evidence automations process them
    Then one evidence record is created and the duplicate row is logged as skipped (duplicate)
+
 
 Scenario: Producer fails to log its run
    Given a producer (Ingestion Agent, automation or ticket review flow) cannot write its activity_runs row
    When its run finishes
    Then the producer's own run is not blocked or failed by the logging step
    And the failure is visible in that producer's own log or report
+
 
 ## Security & Performance
 
@@ -172,6 +188,7 @@ Scenario: Producer fails to log its run
 
 ## Acceptance Criteria
 
+
 Scenario: Browse evidence by SOC 2 control
    Given evidence records in the evidence table with source types approval (Map MigGon37539), loom, ingestion, automation and ticket_review (sources story)
    And soc2_control_mappings assigns one or more active SOC 2 controls to each source type
@@ -179,11 +196,13 @@ Scenario: Browse evidence by SOC 2 control
    Then every confirmed evidence record whose source type is mapped to that control is listed
    And the evidence records themselves are not modified
 
+
 Scenario: One source type mapped to several controls
    Given a source type mapped to more than one control
    When a reviewer filters the page by each of those controls
    Then the same evidence records appear under each control
    And each record remains a single record in the evidence table
+
 
 Scenario: Mapping changes apply without rewriting evidence
    Given evidence exists for a source type
@@ -191,11 +210,13 @@ Scenario: Mapping changes apply without rewriting evidence
    Then the per-control page and the next export reflect the new mapping with no code changes and no reprocessing
    And the mapping row shows who made the latest change and when
 
+
 Scenario: Export evidence for a selected control
    Given a control is selected on the per-control evidence page
    When the reviewer downloads the CSV from the interface
    Then the file contains only the evidence listed for that control
    And its columns are mapped controls, mapping provisional, source type, run_id, source reference, finished_at (approval time for approvals), run status, trigger, counts, actor and AI output state
+
 
 Scenario: Exported evidence traces back to its origin
    Given a row in a per-control CSV export
@@ -203,12 +224,14 @@ Scenario: Exported evidence traces back to its origin
    Then the matching evidence record is found
    And from it the source row (the approval record, loom_sync_runs or activity_runs)
 
+
 Scenario: Only confirmed evidence is listed and exported
    Given evidence records marked confirmed by the evidence module, and runs recorded as skipped or failed in the evidence run log from Map MigGon37539
    And an evidence record whose write confirmation failed (not marked confirmed)
    When a reviewer browses or exports evidence
    Then only evidence records marked confirmed appear
    And skipped and failed runs and unconfirmed records never appear and produce no placeholder records
+
 
 ## Technical Implementation
 
@@ -236,11 +259,13 @@ Scenario: Only confirmed evidence is listed and exported
 
 ## Edge Cases & Error Handling
 
+
 Scenario: Source type without a mapping
    Given evidence whose source type has no active control in soc2_control_mappings
    When a reviewer uses the per-control page
    Then that evidence appears under no control and is excluded from every per-control export
    And it appears on the unmapped evidence page
+
 
 Scenario: Control deactivated
    Given a control marked inactive in soc2_controls
@@ -248,11 +273,13 @@ Scenario: Control deactivated
    Then the control is no longer offered in the control filter
    And evidence whose source type was mapped only to that control appears on the unmapped evidence page
 
+
 Scenario: Optional field blank in an evidence record
    Given a confirmed evidence record without actor, trigger, counts or AI output state
    When the reviewer downloads the CSV
    Then the record is included with those columns blank
    And the export does not fail
+
 
 ## Security & Performance
 
@@ -413,12 +440,6 @@ El texto de historia que tiene SS (generado por la herramienta Generate Story) n
 > As a Client, I want evidence to be collected from every agent and automation in the operation, not only from approvals, so that audits cover the full picture of how the agents work.
 
 Para quién cambia: la historia actual ("As a compliance reviewer…") describe al revisor, no a quien construye, y la del cliente repite el nombre de las cuatro fuentes sin decir por qué importa. Si Generate Story vuelve a regenerar estos campos, hay que pegar este texto después, no antes.
-
-## Item 12 · comment · Map MigGon37539 · reparto con catálogo de eventos (14 oct)
-
-> Design update (Oct 14). SOC 2 evidence is now built around an event catalog: each event that counts as evidence is defined and documented in soc2_event_types, and each occurrence is recorded in soc2_events, with a capture log in soc2_capture_runs and SOC 2 controls in soc2_controls. The four tables are already created in Map King Hub. This story keeps the evidence core: the tables, the evidence module (idempotency, validation, bounded retries, terminal failure, confirmation by re-reading) and the capture log. MapKMigGon39261 captures the first events (Loom syncs, Ingestion Agent runs, the hourly triage run and the task-lane integrity fixes) with a single capture script and no changes to the agents. MapKMigGon39264 maps event types to SOC 2 controls and exports a CSV per control and period for Scrut. Approval decisions will be added as a catalog event once the approval inbox is in regular use. Scrut API integration remains a separate backlog item.
-
-(En inglés porque SS lo lee el cliente.)
 
 ## Decisions for the PM (not SS items)
 
