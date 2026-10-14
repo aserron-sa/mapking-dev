@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "skill_sha256": "3b51a2a838ec5b0fdb8341408babad596ab43218581e637e339bf43b8326ba76",
+  "mode": "full",
+  "scope": {
+    "project": "",
+    "key_projects": []
+  },
+  "status_map": {
+    "Suggested by Resource": "defined",
+    "Nueva": "defined",
+    "New": "defined",
+    "Backlog": "defined",
+    "In Progress": "in_progress",
+    "Stuck": "in_progress",
+    "Ready for QA": "ready_for_qa",
+    "In QA": "ready_for_qa",
+    "QA": "ready_for_qa",
+    "QA Passed": "qa_passed",
+    "Approved": "qa_passed",
+    "Done": "done",
+    "Closed": "done",
+    "Released": "done"
+  },
+  "last_deep_scan": null
+}
