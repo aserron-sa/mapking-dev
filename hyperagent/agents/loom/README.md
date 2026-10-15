@@ -1,8 +1,8 @@
 # Loom — Technical Documentation
 
-Agent: Loom (Hyperagent `cmu1q1bq7009p07adrlnq0ff6`) · Prompt: v3.9.1 · Story: MapKMigGon38532 (CC1) · Updated: 2026-10-15
+Agent: Loom (Hyperagent `cmu1q1bq7009p07adrlnq0ff6`) · Prompt: v3.10 · Story: MapKMigGon38532 (CC1) · Updated: 2026-10-15
 
-Loom is the ingestion and normalization layer of the Map King Command Center. It is a Hyperagent agent whose entire behavior is defined by a system prompt (`loom.agent.md`) and executed by an LLM that calls MCP integrations and runs Python in a sandboxed workspace. This document describes the architecture, the execution model, the data contract, the failure semantics and the known limitations, as of prompt v3.9.1.
+Loom is the ingestion and normalization layer of the Map King Command Center. It is a Hyperagent agent whose entire behavior is defined by a system prompt (`loom.agent.md`) and executed by an LLM that calls MCP integrations and runs Python in a sandboxed workspace. This document describes the architecture, the execution model, the data contract, the failure semantics and the known limitations, as of prompt v3.10.
 
 | File | Role |
 |---|---|
@@ -193,7 +193,7 @@ stateDiagram-v2
   end note
 ```
 
-`closed` exists in the field's options but is not produced by v3.9.1; all exits from scope use `not_returned`.
+`closed` exists in the field's options but is not produced by v3.10; all exits from scope use `not_returned`.
 
 ### 3.5 Time budget
 
@@ -216,7 +216,7 @@ stateDiagram-v2
 | Owner | Fields |
 |---|---|
 | Loom (prompt section 3b) | `normalized_task_id`, `source`, `source_record_id`, `source_table`, `source_url`, `title`, `description`, `owner`, `due_date`, `status_raw`, `domain_tag`, `lifecycle`, `last_updated_at`, `synced_at`, `source_status`, `sync_error`, `category`, `tags`, `schedulable`, `starts_at`, `ends_at`, `all_day` |
-| Reserved for Loom v3.10 | `source_labels` |
+| Reserved for Loom v3.11 | `source_labels` |
 | MapKMigGon38570 (Needs-You) | `needs_you_manual_any` (rollup), `needs_you_signals` (formula), `waiting_since`, `waiting_since_basis` |
 | Airtable | `created_at` (created time) |
 | Links (written from the other side) | `fire_ranks`, `priority_events`, `power_hour_items`, `triage` |
@@ -290,7 +290,7 @@ One row per run, written only by Loom: `run_id` (`loom-YYYYMMDD-HHMMSS` UTC), `s
 
 ## 7. Observability
 
-- **Slack report.** Seven fixed lines; first line `<outcome> · run <run_id> · prompt v3.9.1`, prefixed `Daily sync · ` on scheduled runs.
+- **Slack report.** Seven fixed lines; first line `<outcome> · run <run_id> · prompt v3.10`, prefixed `Daily sync · ` on scheduled runs.
 - **`loom_sync_runs`.** Per-run status, timings, totals, per-source counts, failed and fallback ids, verbatim report. Read by `soc2-capture` as SOC 2 evidence (MapMigGon37539).
 - **Telemetry.** One event per run to `singular-skill-tracker` with `run_type` interactive or scheduled.
 - **Hyperagent threads.** Full tool-call trace per run; scheduled runs continue the schedule's thread.
@@ -331,4 +331,4 @@ Ordered by impact.
 
 ## 10. Version history
 
-See `loom.changelog.md`. Summary: v1–v2 Slack-triggered aggregation; v3–v3.8 (2026-10-06) budget, paging contract, enrichment rules, "Ready for QA" exclusion, run lock and log, scheduled runs; v3.9 (2026-10-07) calendar timing fields; v3.9.1 (2026-10-15) field-ID map, schema and count checks, explicit Airtable mapping, Slack-independent runs.
+See `loom.changelog.md`. Summary: v1–v2 Slack-triggered aggregation; v3–v3.8 (2026-10-06) budget, paging contract, enrichment rules, "Ready for QA" exclusion, run lock and log, scheduled runs; v3.9 (2026-10-07) calendar timing fields; v3.10 (2026-10-15) field-ID map, schema and count checks, explicit Airtable mapping, Slack-independent runs.

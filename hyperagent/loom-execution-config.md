@@ -1,6 +1,6 @@
 # Loom — Execution Configuration (MapKMigGon38532)
 
-Prompt version: **v3.9.1** · Updated: October 15, 2026 · Owner: Andrés Serrón (Singular)
+Prompt version: **v3.10** · Updated: October 15, 2026 · Owner: Andrés Serrón (Singular)
 
 This document describes how the Loom agent that feeds `command_center_tasks` is configured and how it runs. Loom's behavior lives in its system prompt (`agents/loom/loom.agent.md`), the single source of truth for what Loom does. Architecture and execution model: `agents/loom/README.md`. Version history: `agents/loom/loom.changelog.md`.
 
@@ -12,7 +12,7 @@ This document describes how the Loom agent that feeds `command_center_tasks` is 
 |---|---|
 | Name | Loom 🧵 |
 | Agent ID | `cmu1q1bq7009p07adrlnq0ff6` |
-| System prompt | `agents/loom/loom.agent.md` (v3.9.1), pasted as plain text from the first line after the front matter |
+| System prompt | `agents/loom/loom.agent.md` (v3.10), pasted as plain text from the first line after the front matter |
 | Model | Variable, **Balanced** profile, **mid** reasoning |
 | Turn limit | `turnTimeoutMinutes` = 30. Past that, the platform kills the run with no report |
 | Allowed integrations | `airtable`, `attio`, `linear`, `googlecalendar`, `slack` |
@@ -117,7 +117,7 @@ Notes:
 - **Avoid 07:00–10:00 Chicago:** that is when manual syncs are most likely; a collision is safe (the scheduled run logs `rejected_busy` and posts nothing) but that day's scheduled report is lost.
 - **Collisions are safe in general:** the run lock in `loom_sync_runs` prevents two syncs from running at once.
 
-Note: the v3.9 wording "weekdays" in section 7a was fixed in v3.9.1 ("daily").
+Note: the v3.9 wording "weekdays" in section 7a was fixed in v3.10 ("daily").
 
 ### How a scheduled run differs from a Slack run
 
@@ -219,7 +219,7 @@ Test data, never written: a title that starts with "test" + a separator or "[tes
 | category / tags / schedulable | `fldTamXky2fjceS9C` / `fldYqQehpEy918bve` / `fldfxuYNvITcMIlFu` | AI enrichment; cleared when a row is closed |
 | starts_at / ends_at / all_day | `fldrlnSKq9mvoDRLu` / `fldIIcqQnllCLko5c` / `fldPHaq4WRruW6SbL` | Google Calendar rows only (v3.9) |
 
-Fields on this table that Loom does **not** write (MapKMigGon38570, see `docs/38570/schema.md`): `source_labels` (reserved for Loom v3.10), `needs_you_manual_any`, `needs_you_signals`, `waiting_since`, `waiting_since_basis`, and the link fields to `task_lanes`, `priority_events` and `power_hour_items`.
+Fields on this table that Loom does **not** write (MapKMigGon38570, see `docs/38570/schema.md`): `source_labels` (reserved for Loom v3.11), `needs_you_manual_any`, `needs_you_signals`, `waiting_since`, `waiting_since_basis`, and the link fields to `task_lanes`, `priority_events` and `power_hour_items`.
 
 View **"Daily — open"**: filter lifecycle = open, grouped by due_date.
 
@@ -247,9 +247,9 @@ One row per run; lock and log. Fields: `run_id`, `status` (running / success / p
 
 ## 8. Open items
 
-- Deploy v3.9.1 to Hyperagent (procedure in section 7), export and compare, and confirm the next report ends with "· prompt v3.9.1".
+- Deploy v3.10 to Hyperagent (procedure in section 7), export and compare, and confirm the next report ends with "· prompt v3.10".
 - Scheduled runs confirmed: `loom-20261015-040834` posted "Daily sync · ✅ Success" with trigger `schedule` (started 04:08 UTC, i.e. the schedule was re-enabled around 23:08 Chicago).
 - Move the run time to 03:00 Chicago with the procedure in section 3 (re-enable at 03:00).
-- Next prompt version (v3.10): Linear labels into `source_labels` (MapKMigGon38570, Needs-You signal 3).
+- Next prompt version (v3.11): Linear labels into `source_labels` (MapKMigGon38570, Needs-You signal 3).
 - Confirm that `C0BRF6AHDJQ` is `#ingestion`.
 - Clean test records in Max's source tables (needs his OK).

@@ -6,7 +6,7 @@ Every version is a full replacement of the system prompt, pasted as plain text a
 
 ---
 
-## v3.9.1 — 2026-10-15
+## v3.10 — 2026-10-15
 
 **Why:** in run `loom-20261015-040834` Loom could not resolve the source-table field names to IDs (`get_table_schema` returns IDs without names, and the prompt forbade `list_tables_for_base`), so it inferred them; it also retyped inline Airtable, Attio and Calendar results into its workspace files by hand. Both work only by luck and fail silently. The interim 3.91 copy (commit `0667b76`) added the first fixes but lost its section and step numbers, so references such as "step 9" pointed nowhere, and its report still said v3.9.
 
@@ -26,13 +26,13 @@ Every version is a full replacement of the system prompt, pasted as plain text a
 - Enrichment cap is spent in processing order (Airtable → Attio → Google Calendar → Linear); the old priority order could not be honored with source-by-source processing.
 - Section 7a: the schedule runs daily (it said "weekdays"); scheduled runs never prompt for setup.
 - Markdown restored and polished: numbered sections and workflow steps, lists, inline code. Still editor-safe: no fenced code blocks and no tables.
-- Version naming: **3.9.1** (patch on v3.9). v3.10 stays reserved for `source_labels` (MapKMigGon38570).
+- Version naming: **3.10**, a minor version, not a patch: it adds a workflow step (schema check), new outcomes (a source can become unavailable on a failed count or schema check; a core schema failure stops all writes) and a data change (`approvals.due_date`). It was first committed as 3.9.1 (`4ef3ccf`) and renumbered before deployment. `source_labels` (MapKMigGon38570), previously planned as v3.10, moves to **v3.11**.
 
 ### Removed
 - The one-off note about the first run after the "Ready for QA" exclusion closing several hundred rows (done on 2026-10-06).
 - Per-integration OAuth hints from the preflight (integrations are attached once in Hyperagent; a missing one makes the source unavailable).
 
-**Requires:** nothing new in Airtable. After pasting, export the agent and confirm the prompt; the first report must end with "· prompt v3.9.1".
+**Requires:** nothing new in Airtable. After pasting, export the agent and confirm the prompt; the first report must end with "· prompt v3.10".
 
 ---
 

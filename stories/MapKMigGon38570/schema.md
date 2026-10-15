@@ -2,7 +2,7 @@
 
 Base: **Map King Hub** (`appcdpGNTo0DouoqJ`) · Applied: 2026-10-11 · Owner: Andrés Serrón
 
-All changes are additive: no field or table was renamed or deleted. Loom (v3.9) writes only its own fields and is not affected; `source_labels` is reserved for Loom v3.10.
+All changes are additive: no field or table was renamed or deleted. Loom (v3.9) writes only its own fields and is not affected; `source_labels` is reserved for Loom v3.11.
 
 ## `task_lanes` (`tblZhorxkVfKdsW3Z`) — shared with 38571
 
@@ -30,7 +30,7 @@ New fields:
 
 | Field | ID | Type | Written by |
 |---|---|---|---|
-| source_labels | `fld5nWUCSFKgkFJlu` | single line text | Loom v3.10 (empty until then) |
+| source_labels | `fld5nWUCSFKgkFJlu` | single line text | Loom v3.11 (empty until then) |
 | needs_you_manual_any | `fld7prhq7tn7vMyCE` | rollup of `task_lanes.needs_you_manual` → 1/0 | computed |
 | needs_you_signals | `fld7byISqz2gObpzl` | formula | computed |
 | waiting_since | `fldyg45qTxIIhESfp` | date-time (America/Montevideo) | Needs-You automation |
@@ -44,7 +44,7 @@ A task is in Needs-You when `lifecycle = open` and `needs_you_signals` is not em
 |---|---|---|
 | `approval_pending` | `approvals` via Loom | `source_table = approvals` and `status_raw = Pending` |
 | `ticket_needs_max` | `dev_tickets` via Loom | `source_table = dev_tickets` and `status_raw = Needs Max Input` |
-| `linear_label` | Linear via Loom v3.10 | `source_labels` contains `needs-max` |
+| `linear_label` | Linear via Loom v3.11 | `source_labels` contains `needs-max` |
 | `ai_tag` | Loom enrichment | `tags` contains `needs-max` |
 | `manual` | Today | any linked `task_lanes.needs_you_manual` checked |
 
