@@ -6,6 +6,36 @@ Every version is a full replacement of the system prompt, pasted as plain text a
 
 ---
 
+## v3.9.1 — 2026-10-15
+
+**Why:** in run `loom-20261015-040834` Loom could not resolve the source-table field names to IDs (`get_table_schema` returns IDs without names, and the prompt forbade `list_tables_for_base`), so it inferred them; it also retyped inline Airtable, Attio and Calendar results into its workspace files by hand. Both work only by luck and fail silently. The interim 3.91 copy (commit `0667b76`) added the first fixes but lost its section and step numbers, so references such as "step 9" pointed nowhere, and its report still said v3.9.
+
+### Added
+- Section 3b, Airtable field IDs: one name → ID map (inline JSON) for every table Loom touches: `command_center_tasks` (22 fields), `loom_sync_runs` (16) and the five source tables (`approvals` 6, `follow_ups` 7, `ticket_candidates` 5, `dev_tickets` 3, `invoices` 7). All IDs checked against the live schema on 2026-10-15. Loom reads and writes only mapped fields.
+- Schema check (workflow step 2): one `get_table_schema` call for the seven tables. A missing ID in `command_center_tasks` or `loom_sync_runs` stops all writes (❌); a missing ID in a source table makes only that table unavailable (⚠️). `list_tables_for_base` is never called; a field ID is never guessed.
+- Explicit per-table mapping for the Airtable sources (`title`, `description`, `owner`, `due_date`, `status_raw`, `last_updated_at`), and the invoices rule made precise: `due_date` before today (America/Montevideo) and `approval_status` not "Paid".
+- Raw-page rule with count checks (section 2): pages are copied from `/large_tool_results/` or written in one Write exactly as returned, then each page's record count is checked against the count the source reports. A mismatch is re-fetched once, then the source is unavailable for the run; unverified data is never written.
+- Slack output never gates a run (section 7): a read-only or failing Slack connection never blocks or shortens the sync; no test or placeholder posts; one post attempt, only in the designated place.
+- Full Linear descriptions are fetched before the upsert batches are built, so each issue is written once (section 5c).
+- Fields of `command_center_tasks` that Loom never writes are listed (section 4): `source_labels`, the Needs-You fields, `created_at` and the link fields.
+- Front matter (metadata only; the prompt starts at "## Telemetry").
+
+### Changed
+- **`approvals.due_date` is now written empty.** Earlier versions put `approval_date` (a decision date) into `due_date`. The next run clears it on open approval rows.
+- Index and lock reads use field IDs instead of names; the lock read sorts by `started_at` ID and retries once without `sort`.
+- Enrichment cap is spent in processing order (Airtable → Attio → Google Calendar → Linear); the old priority order could not be honored with source-by-source processing.
+- Section 7a: the schedule runs daily (it said "weekdays"); scheduled runs never prompt for setup.
+- Markdown restored and polished: numbered sections and workflow steps, lists, inline code. Still editor-safe: no fenced code blocks and no tables.
+- Version naming: **3.9.1** (patch on v3.9). v3.10 stays reserved for `source_labels` (MapKMigGon38570).
+
+### Removed
+- The one-off note about the first run after the "Ready for QA" exclusion closing several hundred rows (done on 2026-10-06).
+- Per-integration OAuth hints from the preflight (integrations are attached once in Hyperagent; a missing one makes the source unavailable).
+
+**Requires:** nothing new in Airtable. After pasting, export the agent and confirm the prompt; the first report must end with "· prompt v3.9.1".
+
+---
+
 ## v3.9 — 2026-10-07
 
 **Why:** the Command Center's Right Now tile could not show today's events. `due_date` is date-only, so the dashboard had no start or end time, read the date as midnight UTC (the previous day in the Americas), and could not hide events that had already ended.

@@ -1,8 +1,8 @@
 # Loom — Execution Configuration (MapKMigGon38532)
 
-Prompt version: **v3.9** · Updated: October 11, 2026 · Owner: Andrés Serrón (Singular)
+Prompt version: **v3.9.1** · Updated: October 15, 2026 · Owner: Andrés Serrón (Singular)
 
-This document describes how the Loom agent that feeds `command_center_tasks` is configured and how it runs. Loom's behavior lives in its system prompt (`agents/loom/loom.agent.md`), the single source of truth for what Loom does. Version history: `agents/loom/loom.changelog.md`.
+This document describes how the Loom agent that feeds `command_center_tasks` is configured and how it runs. Loom's behavior lives in its system prompt (`agents/loom/loom.agent.md`), the single source of truth for what Loom does. Architecture and execution model: `agents/loom/README.md`. Version history: `agents/loom/loom.changelog.md`.
 
 ---
 
@@ -12,7 +12,7 @@ This document describes how the Loom agent that feeds `command_center_tasks` is 
 |---|---|
 | Name | Loom 🧵 |
 | Agent ID | `cmu1q1bq7009p07adrlnq0ff6` |
-| System prompt | `agents/loom/loom.agent.md` (v3.9), pasted as plain text |
+| System prompt | `agents/loom/loom.agent.md` (v3.9.1), pasted as plain text from the first line after the front matter |
 | Model | Variable, **Balanced** profile, **mid** reasoning |
 | Turn limit | `turnTimeoutMinutes` = 30. Past that, the platform kills the run with no report |
 | Allowed integrations | `airtable`, `attio`, `linear`, `googlecalendar`, `slack` |
@@ -117,7 +117,7 @@ Notes:
 - **Avoid 07:00–10:00 Chicago:** that is when manual syncs are most likely; a collision is safe (the scheduled run logs `rejected_busy` and posts nothing) but that day's scheduled report is lost.
 - **Collisions are safe in general:** the run lock in `loom_sync_runs` prevents two syncs from running at once.
 
-Note: section 7a of the v3.9 prompt still says "weekdays" and "before the CEO's day starts". Behavior is unchanged (the schedule decides when it runs); fix the wording in the next prompt version.
+Note: the v3.9 wording "weekdays" in section 7a was fixed in v3.9.1 ("daily").
 
 ### How a scheduled run differs from a Slack run
 
@@ -237,7 +237,7 @@ One row per run; lock and log. Fields: `run_id`, `status` (running / success / p
 
 | Task | How |
 |---|---|
-| Update the prompt | Hyperagent → Loom → edit system prompt → paste the full `agents/loom/loom.agent.md` as plain text → save → export the agent and confirm the text matches → add a CHANGELOG entry |
+| Update the prompt | Hyperagent → Loom → edit system prompt → paste `agents/loom/loom.agent.md` **from the first line after the front matter** (`## Telemetry …`) as plain text → save → export the agent and confirm the text matches → add a CHANGELOG entry. The next report's first line must end with the new version |
 | Normal sync | `@Loom sync now` in `#ingestion` |
 | Full clean-up | `@Loom rebuild` in `#ingestion` (once, after changing enrichment rules) |
 | See what happened in a run | The run's row in `loom_sync_runs` and the thread in Hyperagent |
@@ -247,9 +247,9 @@ One row per run; lock and log. Fields: `run_id`, `status` (running / success / p
 
 ## 8. Open items
 
-- Confirm the first scheduled run (2026-10-12 ≈ 17:20 Chicago) posts "Daily sync · ✅" and logs trigger `schedule`.
+- Deploy v3.9.1 to Hyperagent (procedure in section 7), export and compare, and confirm the next report ends with "· prompt v3.9.1".
+- Scheduled runs confirmed: `loom-20261015-040834` posted "Daily sync · ✅ Success" with trigger `schedule` (started 04:08 UTC, i.e. the schedule was re-enabled around 23:08 Chicago).
 - Move the run time to 03:00 Chicago with the procedure in section 3 (re-enable at 03:00).
-- Sync the published prompt back into `agents/loom/loom.agent.md`: the published v3.9 has formatting changes (helper and report template as plain text, "• " bullet rule, " · prompt v3.9" suffix) that the repo copy lacks.
-- Next prompt version: section 7a "weekdays" → "daily"; Linear labels into `source_labels` (MapKMigGon38570, Needs-You signal 3).
+- Next prompt version (v3.10): Linear labels into `source_labels` (MapKMigGon38570, Needs-You signal 3).
 - Confirm that `C0BRF6AHDJQ` is `#ingestion`.
 - Clean test records in Max's source tables (needs his OK).
