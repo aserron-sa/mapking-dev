@@ -6,6 +6,39 @@ Every version is a full replacement of the system prompt, pasted as plain text a
 
 ---
 
+## v3.11 — 2026-10-15
+
+**Why:** the first v3.10 run showed that field validation cannot be a step inside the run. v3.10 checked the field IDs with `get_table_schema`, whose result came back inline, so "confirm in a script" meant the model retyping the IDs: a check that cannot fail honestly. More fundamentally, the target tables are the storage; if their field map is wrong, no ingestion can be correct. Validation is therefore a gate before the agent starts, not a source failure inside normal operation. Two related defects: the lock was ordered before anything was known about the schema of `loom_sync_runs` itself, and the schedule's instruction no longer contains the phrase section 7a keyed on.
+
+### Added
+- **Pre-execution validation (section 3b)**, once per run, before the lock and before any source is read:
+  - A. Verify the embedded map: one `pageSize` 1 read per table with every mapped field ID. Airtable answers 422 to an unknown table or field ("Could not find a table/field with name or ID …", verified 2026-10-15), so Airtable verifies the IDs; the model never parses or retypes the result.
+  - B. If a table failed: repair from the live schema. One `list_tables_for_base` call, which must arrive as a saved file (never retyped); a script resolves each failed table (by ID, else exact name) and each mapped field (exact name, type checked against the expected types now listed in 3b).
+  - C. Validate the repaired map with the same reads.
+  - D. Decide by role. Both TARGET tables (`command_center_tasks`, `loom_sync_runs`) validated → continue; either not → ABORT. A SOURCE table not validated → only that table is unavailable.
+  - E. The validated map is the only source of IDs for the rest of the run. A repaired map is never stored; a Notice line in the report asks for the prompt to be updated.
+- **ABORT routine and critical report**: six fixed lines (outcome "(field validation)" or "(aborted)", critical error, where, checks, data, action). An abort writes a `failure` row in `loom_sync_runs` when that table is validated, never leaves a lock behind, and posts only the critical report (no acknowledgement).
+- **Expected field types** for the 66 mapped fields, verified against the live schema on 2026-10-15.
+- **Optional Notice line** in the normal report when the map was repaired.
+
+### Changed
+- **Lock order: validate → lock → acknowledgement.** The lock lives in `loom_sync_runs`, so its IDs must be validated first. Validation is read-only, so concurrent runs may validate together; only the writing phase is exclusive. `run_id` and `started_at` are fixed at the start of the run, before validation, and used in every row and message.
+- **Release on every exit after the lock:** success, partial, failure, budget stop, ABORT and unexpected errors. Only the run's own row is updated; 3 retries; the report is posted even if the release fails. The 35-minute rule remains the safety net (the platform kills a run at 30 minutes): a stale `running` row never blocks, and the next run marks it `abandoned`.
+- **Table and field IDs outside section 3b are removed** from the Mission, the paging contract and the lock section; every read and write takes its IDs from the validated map of the run.
+- v3.10's schema check (`get_table_schema`, workflow step 2) is replaced by section 3b. `get_table_schema` is never called; `list_tables_for_base` is called only in repair step B.
+- Guardrails: validation is not part of normal operation. In normal operation "one source's failure never blocks the others" is unchanged; if a storage table is not validated, the run does not start.
+- Section 7a: the routine trigger is the daily schedule at 03:00 America/Chicago; a scheduled run is recognized by the meaning of its instruction, not by an exact phrase.
+
+**Version:** a minor version (new phase, new lock order), not a patch. It was prepared as "3.10.1" before deployment and renumbered; `source_labels` (MapKMigGon38570) moves from v3.11 to **v3.12**.
+
+**Known limits:**
+- A field whose ID still exists but whose type changed passes step A (existence only) and surfaces later as write errors. Types are checked only for fields resolved in repair step B.
+- A lock left by a platform kill is cleared only by the next run (35-minute rule); it blocks nothing in the meantime beyond the first 35 minutes.
+
+**Requires:** paste from `## Telemetry`, export and compare. The first report must end with "· prompt v3.11". Update the agent description in Hyperagent to "Loom v3.11".
+
+---
+
 ## v3.10 — 2026-10-15
 
 **Why:** in run `loom-20261015-040834` Loom could not resolve the source-table field names to IDs (`get_table_schema` returns IDs without names, and the prompt forbade `list_tables_for_base`), so it inferred them; it also retyped inline Airtable, Attio and Calendar results into its workspace files by hand. Both work only by luck and fail silently. The interim 3.91 copy (commit `0667b76`) added the first fixes but lost its section and step numbers, so references such as "step 9" pointed nowhere, and its report still said v3.9.
@@ -26,7 +59,7 @@ Every version is a full replacement of the system prompt, pasted as plain text a
 - Enrichment cap is spent in processing order (Airtable → Attio → Google Calendar → Linear); the old priority order could not be honored with source-by-source processing.
 - Section 7a: the schedule runs daily (it said "weekdays"); scheduled runs never prompt for setup.
 - Markdown restored and polished: numbered sections and workflow steps, lists, inline code. Still editor-safe: no fenced code blocks and no tables.
-- Version naming: **3.10**, a minor version, not a patch: it adds a workflow step (schema check), new outcomes (a source can become unavailable on a failed count or schema check; a core schema failure stops all writes) and a data change (`approvals.due_date`). It was first committed as 3.9.1 (`4ef3ccf`) and renumbered before deployment. `source_labels` (MapKMigGon38570), previously planned as v3.10, moves to **v3.11**.
+- Version naming: **3.10**, a minor version, not a patch: it adds a workflow step (schema check), new outcomes (a source can become unavailable on a failed count or schema check; a core schema failure stops all writes) and a data change (`approvals.due_date`). It was first committed as 3.9.1 (`4ef3ccf`) and renumbered before deployment. `source_labels` (MapKMigGon38570), originally planned as v3.10, is now planned for **v3.12** (see v3.11).
 
 ### Removed
 - The one-off note about the first run after the "Ready for QA" exclusion closing several hundred rows (done on 2026-10-06).
