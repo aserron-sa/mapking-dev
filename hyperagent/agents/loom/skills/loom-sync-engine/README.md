@@ -38,4 +38,4 @@ A mismatch between a script's SHA-256 here and the live skill means the repo is 
 
 - The earlier `skill.json` in this folder was an excerpt of the export: invalid JSON (unescaped quotes), cut off mid-sentence, without scripts. It was replaced by the generated manifest above, and `SKILL.md` now holds the full runbook (11,604 characters; the excerpt stopped at 7,376).
 - The full export file (`skill-loom-sync-engine.json`) is not stored here, to avoid duplicating the scripts. Re-export from Hyperagent when a re-import is needed.
-- The source-of-truth prompt stays in the parent folder: [loom.agent.md](../loom.agent.md) and [loom.changelog.md](../loom.changelog.md).
+- The source-of-truth prompt stays in the parent folder: [loom.agent.md](../../loom.agent.md) and [loom.changelog.md](../../loom.changelog.md).
