@@ -1,0 +1,108 @@
+{
+    "name":  "loom-sync-engine",
+    "description":  "Tested, modular engine for Loom's Command Center sync (prompt v3.14). It handles everything mechanical: the schema as data, request params, page saving with count checks, Calendar identity and timing invariants, per-source scope rules, normalization, enrichment cap, upsert and guarded close batches, run lock, on-demand schema validation, verify, and the 7-line report. Loom only makes the tool calls and does enrichment.",
+    "whenToUse":  "At the start of every Loom sync or rebuild run (scheduled or \"@Loom sync now\"). Fetch it with FetchSkillScripts and follow the runbook. Never rewrite sync, parsing or report code by hand.",
+    "tags":  [
+                 "loom",
+                 "command-center",
+                 "airtable",
+                 "sync",
+                 "map-king"
+             ],
+    "requiredByLoomPromptAfter":  "v3.12",
+    "hyperagent":  {
+                       "skillId":  "cmv94wrja069s07admbjkcfwr",
+                       "workspaceId":  "wsp01M12A18YR_T69Z5R51ZR8R2G3H",
+                       "familyId":  "xtVuamTS_Jg8V_PYoaR1tg",
+                       "isGlobal":  true,
+                       "createdAt":  "2026-10-15T06:05:05.254Z",
+                       "updatedAt":  "2026-10-15T07:28:40.026Z",
+                       "contentHash":  "v1:219bb5793e20613d02dd19f1677b6ef21850049ad3b629beec252bcb3a4169e1",
+                       "exportedAt":  "2026-10-15T07:41:15.203Z",
+                       "url":  "https://hyperagent.com/skills/cmv94wrja069s07admbjkcfwr"
+                   },
+    "documentation":  "SKILL.md",
+    "tests":  "cd scripts \u0026\u0026 python3 test_loom.py",
+    "files":  [
+                  {
+                      "path":  "scripts/loom.py",
+                      "bytes":  3052,
+                      "sha256":  "2ee634644df3d9354675019bcf9df9e46dca21a2991860f959fba6d2027802d6"
+                  },
+                  {
+                      "path":  "scripts/schema.py",
+                      "bytes":  9351,
+                      "sha256":  "360f225ebea8026c4276c102d4d4b94f3cb16c49ed9268cf074f404a16e82fb1"
+                  },
+                  {
+                      "path":  "scripts/config.py",
+                      "bytes":  3709,
+                      "sha256":  "c3f91acb38ac43990f6038f06fa50ac20610ea79d8103fccb551712271cce366"
+                  },
+                  {
+                      "path":  "scripts/results.py",
+                      "bytes":  6914,
+                      "sha256":  "e85e132a866b2f846b2c18ad3d0906aeb7be2c0f56c9edbc27d085f513965022"
+                  },
+                  {
+                      "path":  "scripts/text_utils.py",
+                      "bytes":  830,
+                      "sha256":  "1609c269f7dac20c36bbeab77b289dd5cd5c9e6f978ee82bd34606a06f1b4fd3"
+                  },
+                  {
+                      "path":  "scripts/src_airtable.py",
+                      "bytes":  2677,
+                      "sha256":  "c002146389666394a478c8147574f2fabf9666287a36570ee4e5713686815c42"
+                  },
+                  {
+                      "path":  "scripts/src_attio.py",
+                      "bytes":  1195,
+                      "sha256":  "6bcf1916c0edb7c1ec73b68606f9a3ae468a013bb15ef73c7df4c45181bf493c"
+                  },
+                  {
+                      "path":  "scripts/src_gcal.py",
+                      "bytes":  4936,
+                      "sha256":  "a239648f31943c9bf6ba30a71f5bb66aec1187fd59204a171564b5fbd6796bef"
+                  },
+                  {
+                      "path":  "scripts/src_linear.py",
+                      "bytes":  1284,
+                      "sha256":  "5170f6f8359586eb39c5ce53f491423d6a89c6ab04fe6d59db86d3c87689df5e"
+                  },
+                  {
+                      "path":  "scripts/enrichment.py",
+                      "bytes":  1688,
+                      "sha256":  "7e15d43a9a7259fb16cd99d5e9bcf0355ce94599177a24afe963500229c1597a"
+                  },
+                  {
+                      "path":  "scripts/tasks_store.py",
+                      "bytes":  2066,
+                      "sha256":  "69c137ebbbe5cb19eb6f5b10ebc30aa576d1f436fe452adc0537e29055ec7712"
+                  },
+                  {
+                      "path":  "scripts/lock.py",
+                      "bytes":  3972,
+                      "sha256":  "d86974a94e66c699196883be3e2084289c265d6676c52ecc82b44a9955481351"
+                  },
+                  {
+                      "path":  "scripts/schema_tools.py",
+                      "bytes":  4001,
+                      "sha256":  "f9af7a6bb49ebdee3dc55b322c92d735cac2b9a908b9233d6e00167ab7963a2e"
+                  },
+                  {
+                      "path":  "scripts/pipeline.py",
+                      "bytes":  8499,
+                      "sha256":  "733f02bfd785b0abca5a474c9df5a63630c0c6833980ba90c250f593b2190510"
+                  },
+                  {
+                      "path":  "scripts/report.py",
+                      "bytes":  5050,
+                      "sha256":  "c8ff53aab3dc8cb820d9c809ff9300eecf0dbc5ec0fd51cde20cb4d1ef8bb06f"
+                  },
+                  {
+                      "path":  "scripts/test_loom.py",
+                      "bytes":  16491,
+                      "sha256":  "bf450f93e7d022f1eebda625cbe2c4a2152fcde6f1ac2bd718402c35a528ac6f"
+                  }
+              ]
+}
